@@ -39,7 +39,7 @@ class Share:
         self.difficulty = factory.difficulty  # WARNING: this can be per-job
 
         # build the block
-        coinbase = factory.coinbase_1 + factory.extraNonce1 + extranonce2 + factory.coinbase_2
+        coinbase = factory.coinbase_1 + factory.extranonce1 + extranonce2 + factory.coinbase_2
         coinbase_hash_bin = Share.sha256d(unhexlify(coinbase))
         merkle_root = hexlify(coinbase_hash_bin)
         version_bin = struct.pack("<I", int(factory.block_version, base=16))
@@ -67,7 +67,7 @@ class Share:
 
 
     def serialize(self):
-        return struct.pack('<HHIII', self.job_code, self.difficulty, int(self.extranonce2, base=16), self.ntime, self.nonce)
+        return struct.pack('<HHIII', self.job_code, self.difficulty, int(self.extranonce2, base=16), self.factory.extranonce1, self.nonce)
 
 
 class WorkFactory:
@@ -84,7 +84,7 @@ class WorkFactory:
     def __init__(self, session_id):
         self.block_version = hexlify(b'FOO-').decode()
         self.prev_block_hash = hexlify(b'This is a ~random 32-byte string').decode()
-        self.extraNonce1 = "{:08x}".format(hash(session_id))
+        self.extranonce1 = "{:08x}".format(hash(session_id) & 0xffffff)
         self.job_id = 0
         self.job_kind = "foo"
         self.job_code = 0
@@ -102,7 +102,7 @@ class WorkFactory:
                  self.merkle_branches, self.block_version, self.nbits, self.ntime, cancel_older_jobs]
 
 
-#assert WorkFactory().buildShare("00000000", "595a4dbe", "b59e23c3").valid()
+#assert WorkFactory("toto").buildShare("00000000", "595a4dbe", "b59e23c3").valid()
 #assert WorkFactory().buildShare("01000000", "baaaaaad", "e5ab4003").valid()
 
 class StratumProtocol(basic.LineOnlyReceiver):
@@ -129,7 +129,6 @@ class StratumProtocol(basic.LineOnlyReceiver):
 
     def connectionLost(self, reason):
         # log the deconnection
-        self.deactivate()
         self.factory.unregister(self)
         self.log.debug("connection lost from {log_source}")
         # update the (db-stored) stats for this client, if it submitted a username
@@ -182,7 +181,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
         
         self.work_factory = WorkFactory(session_id)
         reactor.callLater(0.5, self.notify)
-        return [[['mining.notify', session_id]], self.work_factory.extraNonce1, self.work_factory.extraNonce2_size]
+        return [[['mining.notify', session_id]], self.work_factory.extranonce1, self.work_factory.extraNonce2_size]
 
 
     def authorize(self, username, password):
@@ -190,21 +189,8 @@ class StratumProtocol(basic.LineOnlyReceiver):
         self.workers[username] = password
         return True
 
-    def activate(self):
-        if self.last_active is None:
-            self.factory.active_miners.increment()
-        self.last_active = time.time()
-        
-    def check_activity(self):
-        if self.last_active is None:
-            return
-        if time.time() - self.last_active > ACTIVITY_TIMEOUT:
-            self.last_active = None
-            self.factory.active_miners.decrement()
-
     def submit(self, worker_name, job_id, extranonce2, ntime, nonce):
         # check whether the share is valid
-        self.activate()
         share = self.work_factory.buildShare(extranonce2, ntime, nonce)
         valid = share.valid()
         if not valid:
@@ -263,8 +249,9 @@ class StratumFactory(protocol.Factory):
 
     def wake_clients(self):
         for conn in self.active_connections:
-            conn.check_activity()
+            #conn.check_activity()
             #conn.ping()
+            pass
 
     def save_share(self, share, worker_name):
         self.block_file.write(share.serialize())
@@ -280,8 +267,10 @@ class StratumFactory(protocol.Factory):
 
     def register(self, protocol):
         self.active_connections.add(protocol)
+        self.active_miners.increment()
 
     def unregister(self, protocol):
+        self.active_miners.decrement()
         try:
             self.active_connections.remove(self)
         except:
