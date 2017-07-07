@@ -67,7 +67,7 @@ class Share:
 
 
     def serialize(self):
-        return struct.pack('<HHIII', self.job_code, self.difficulty, int(self.extranonce2, base=16), self.factory.extranonce1, self.nonce)
+        return struct.pack('<HHIII', self.job_code, self.difficulty, int(self.extranonce2, base=16), int(self.factory.extranonce1, base=16), self.nonce)
 
 
 class WorkFactory:
