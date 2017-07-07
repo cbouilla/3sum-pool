@@ -25,7 +25,7 @@ SECRET_KEY = 'lr*g=r9((6sy5!&j$iy%il7q$j$dd0%d!8^++t)_iz!fygl-6z'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['3sumpool.fil.cool', 'localhost', '127.0.0.1']
 
 
 # Application definition
