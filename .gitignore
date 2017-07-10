@@ -1,3 +1,5 @@
 *.pyc
 /site/db.sqlite3
 /twistd.pid
+/blocks.bin
+/stats.bin

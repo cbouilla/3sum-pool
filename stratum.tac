@@ -1,15 +1,21 @@
 from twisted.application import internet, service
-from twisted_server import StratumFactory
+from twisted_server import StratumFactory, StratumSite
+from twisted.web import server
 
 port = 9998
 
-# Create a MultiService, and hook up a TCPServer and a UDPServer to it as
-# children.
+# Create a MultiService
 stratumService = service.MultiService()
-tcpFactory = StratumFactory()
-internet.TCPServer(port, tcpFactory).setServiceParent(stratumService)
 
-internet.TimerService(10, tcpFactory.wake_clients).setServiceParent(stratumService)
+# hook up the stratum server
+pool = StratumFactory()
+internet.TCPServer(port, pool).setServiceParent(stratumService)
+
+# hook up periodic actions
+internet.TimerService(10, pool.wake_clients).setServiceParent(stratumService)
+
+website = server.Site(StratumSite(pool))
+internet.TCPServer(8080, website).setServiceParent(stratumService)
 
 # Create an application as normal
 application = service.Application("3SUM Stratum Server")
