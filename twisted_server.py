@@ -236,18 +236,17 @@ class StratumProtocol(basic.LineOnlyReceiver):
         self.transport.write(encoded)
 
 
-class LogWrapper(Logger):
-    def __init__(self, *args, **kwargs):
-        super(LogWrapper, self).__init__(*args, **kwargs)
-
-    def log(self, level, *args, **kwargs):
-        self.info(*args, **kwargs)
+#class LogWrapper(Logger):
+#    def __init__(self, *args, **kwargs):
+#        super(LogWrapper, self).__init__(*args, **kwargs)
+#    def log(self, level, *args, **kwargs):
+#        self.info(*args, **kwargs)
 
 
 
 class StratumFactory(protocol.Factory):
     """Hold the global state of the Stratum server"""
-    log = LogWrapper(namespace="Stratum")
+    log = Logger(namespace="Stratum")
     block_file = None
     workers = {}
     active_connections = set()
@@ -256,7 +255,7 @@ class StratumFactory(protocol.Factory):
         # miners we must send work to
         self.miner_count = Metrology.counter('active-miners')
         self.share_per_s = Metrology.meter('shares')
-        self.metrology_reporter = MetrologyReporter(level=logging.DEBUG, logger=self.log, interval=10)
+        #self.metrology_reporter = MetrologyReporter(level=logging.DEBUG, logger=self.log, interval=10)
 
     def buildProtocol(self, addr):
         return StratumProtocol(self)
@@ -278,7 +277,7 @@ class StratumFactory(protocol.Factory):
                 self.workers = pickle.load(f)
         except Exception as e:
             self.log.warn('impossible to load stats : {}'.format(e))
-        self.metrology_reporter.start()
+        #self.metrology_reporter.start()
 
     def stopFactory(self):
         self.block_file.close()
@@ -287,7 +286,7 @@ class StratumFactory(protocol.Factory):
                 pickle.dump(self.workers, f)
         except Exception as e:
             self.log.error('impossible to save stats : {}'.format(e))
-        self.metrology_reporter.stop()
+        #self.metrology_reporter.stop()
 
 
 
@@ -298,7 +297,7 @@ class StratumSite(resource.Resource):
 
     isLeaf = True
     def render_GET(self, request):
-        '''hack JSONP'''
+        '''hack using JSONP'''
         request.responseHeaders.addRawHeader(b"content-type", b"application/json")
         d = {}
         d['miners'] = self.factory.miner_count.count
