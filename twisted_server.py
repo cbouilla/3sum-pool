@@ -305,3 +305,15 @@ class StratumSite(resource.Resource):
         d['shares'] = os.path.getsize(BLOCK_FILE) // 16 # each share is stored on 16 bytes
         return b'jsonCallback(' + json.dumps(d).encode() + b');'
 
+
+class StratumCron:
+    """invoqued periodically"""
+    def __init__(self, factory):
+        self.factory = factory
+
+    def minute(self):
+        # log progress ?
+        try:
+            self.factory.block_file.flush()
+        except:
+            log.error("Couldn't flush block file")

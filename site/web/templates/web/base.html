@@ -95,7 +95,7 @@
 
         function jsonCallback(json){
           $("#n_miners").html(json['miners']);
-          $("#rate").html(json['rate']);
+          $("#rate").html(json['rate'].toFixed(1));
           $("#shares").html(bytesToSize(json['shares']));
           $(".progress-bar").attr("aria-valuenow", json['shares'] / 12e9)
           $("#gauge-label").html((100 * json['shares'] / 12e9).toFixed(0))

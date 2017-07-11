@@ -1,5 +1,5 @@
 from twisted.application import internet, service
-from twisted_server import StratumFactory, StratumSite
+from twisted_server import StratumFactory, StratumSite, StratumCron
 from twisted.web import server
 
 port = 9998
@@ -11,11 +11,13 @@ stratumService = service.MultiService()
 pool = StratumFactory()
 internet.TCPServer(port, pool).setServiceParent(stratumService)
 
-# hook up periodic actions
-internet.TimerService(10, pool.wake_clients).setServiceParent(stratumService)
-
+# hook-up the JSONP webservice
 website = server.Site(StratumSite(pool))
 internet.TCPServer(8080, website).setServiceParent(stratumService)
+
+# hook up periodic actions
+cron = StratumCron(pool)
+internet.TimerService(60, cron.minute).setServiceParent(stratumService)
 
 # Create an application as normal
 application = service.Application("3SUM Stratum Server")
