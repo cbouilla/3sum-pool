@@ -6,4 +6,5 @@ urlpatterns = [
 	url(r'^$', index, name='index'),
     url(r'^join$', join, name='join'),
     url(r'^faq$', faq, name='faq'),
+    url(r'^writeup$', writeup, name='writeup'),
 ]

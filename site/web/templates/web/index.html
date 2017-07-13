@@ -5,7 +5,7 @@
     <div class="jumbotron">
       <div class="container">
         <h1>Help us mine <del>bitcoins</del> hash collisions</h1>
-        <p>Let's put your bitcoin mining equipment to proper use: finding a 128-bit partial 3-way collision for SHA-256.</p>
+        <p>Let's put your bitcoin mining equipment to proper use: finding a partial (128-bit) 3-way collision for SHA-256.</p>
         <p>
         <p><a class="btn btn-success btn-lg" role="button" href="{% url 'web:join' %}">I want to help &raquo;</a></p>
       </div>
@@ -17,7 +17,7 @@
           <h2>What is this?</h2>
           <p>This is a project to crowdsource a large cryptologic computation amongst bitcoin miners.</p> 
 
-          <p>The combined computational power of bitcoin miners is amazing, but it's only for mining bitcoins. However, we can use it to find a collision in a secure hash function.</p>
+          <p style="margin-bottom: 0px">The combined computational power of bitcoin miners is amazing, but it's only for mining bitcoins. However, we can use it to find some kind of collision in a secure hash function.</p>
         </div>
         <div class="col-md-4">
           <h2>Why do this?</h2>
@@ -42,19 +42,22 @@
       
         <div class="col-md-4">
           <h2>How does it work?</h2>
-          <p>3SUM-pool is a special not-for-profit bitcoin mining pool. 
+          <p>The <span style="font-family: fantasy;">3SUM</span>-pool is a special not-for-profit bitcoin mining pool. 
              <!--Miners participating in this pool don't produce bitcoins and are not remunerated.</p>-->
           Miners participating in this pool contribute their power to the forgery of a (partial) hash collision.</p>
            <div class="row">
-            <div class="col-md-6 col-md-offset-3">
-              <a href="{% url 'web:faq' %}" role="button" class="btn btn-info btn-block btn-lg">Learn more &raquo;</a>
+            <div class="col-md-5 col-md-offset-1">
+              <a href="{% url 'web:writeup' %}" role="button" class="btn btn-info btn-block btn-lg">Learn more &raquo;</a>
+            </div>
+            <div class="col-md-5">
+              <a href="{% url 'web:faq' %}" role="button" class="btn btn-primary btn-block btn-lg">FAQ &raquo;</a>
             </div>
           </div>
        </div>
       
        <div class="col-md-4">
           <h2>We need your help!</h2>
-          <p>Use your bitcoin mining rig to help us find a large hash collision. It can be helpful to us even if it cannot bring you a profit in bitcoin mining.</p>
+          <p>Use your bitcoin mining rig to help us accomplish a cryptographic feat. It can be helpful to us even if it cannot bring you a profit in bitcoin mining.</p>
           <div class="row">
             <div class="col-md-6 col-md-offset-3">
               <a href="{% url 'web:join' %}" role="button" class="btn btn-success btn-block btn-lg">Join the pool &raquo;</a>

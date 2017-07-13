@@ -20,6 +20,14 @@
 
     <!-- Custom styles for this template -->
     <link href="{% static 'web/css/jumbotron.css' %}" rel="stylesheet">
+
+    <!-- MathJax -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+      });
+    </script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
   </head>
 
   <body>
@@ -37,6 +45,7 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-left">
+              <li class="{% active 'writeup' %}"><a href="{% url 'web:writeup' %}">Learn more</a></li>
               <li class="{% active 'join' %}"><a href="{% url 'web:join' %}">Participate</a></li>
               <li class="{% active 'faq' %}"><a href="{% url 'web:faq' %}">FAQ</a></li>
               <li class="{% active 'data' %}"><a href="#">Data</a></li>
@@ -63,7 +72,7 @@
       <div class="container">
       <hr>
       <footer>
-        <p>&copy; 3sumpool.com, 2017</p>
+        <p>&copy; 3sumpool.fil.cool, 2017</p>
         <p>
       <a class="col-md-offset-2 col-md-3" href="http://www.cristal.univ-lille.fr/">
             <img height="70px" src="{% static 'web/images/logoCRIStAL.svg' %}"></a>

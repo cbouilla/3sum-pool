@@ -8,3 +8,6 @@ def join(request):
 
 def faq(request):
     return render(request, 'web/faq.html')
+
+def writeup(request):
+    return render(request, 'web/writeup.html')
