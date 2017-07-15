@@ -8,18 +8,61 @@ import json
 from hashlib import sha256
 from binascii import hexlify, unhexlify
 import os.path
+import random
 
-import metrology
+#import metrology
 from metrology import Metrology
-from metrology.reporter.logger import LoggerReporter as MetrologyReporter
 
 from twisted.internet import reactor, protocol, endpoints
 from twisted.protocols import basic
 from twisted.logger import Logger
-from twisted.web.resource import Resource
+from twisted.web.resource import Resource, NoResource
 
 BLOCK_FILE = "blocks.bin"
 STATS_FILE = "stats.bin"
+JOB_TYPES = ['FOO', 'BAR', 'FOOBAR']
+
+
+class WorkFactory:
+   ######################""" work parameters
+    extraNonce2_size = 4
+    coinbase_1 = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff20020862062f503253482f04b8864e5008"
+    coinbase_2 = "072f736c7573682f000000000100f2052a010000001976a914d23fcdf86f7e756a64a7a9688ef9903327048ed988ac00000000"
+    merkle_branches = []
+    nbits = "efbeadde"  # proof of honesty
+    ntime = "adaaaaba"
+
+    def __init__(self, version, extranonce1):
+        self.job_id = 0
+        self.difficulty = 1
+        self.extranonce1 = extranonce1
+
+        # non-constant work parameters
+        if version == 'FOO':
+            self.block_version = hexlify(b'-OOF').decode()
+            self.prev_block_hash = hexlify(Share.swap_endian_words(hexlify(b'This is a ~random 32-byte string'))).decode()
+            self.job_kind = "foo"
+            self.job_code = 0
+        elif version == 'BAR':
+            self.block_version = hexlify(b'-RAB').decode()
+            self.prev_block_hash = hexlify(Share.swap_endian_words(hexlify(b'This is a ~random 32-byte string'))).decode()    
+            self.job_kind = "bar"
+            self.job_code = 1
+        elif version == 'FOOBAR':
+            self.block_version = hexlify(b'BOOF').decode()
+            self.prev_block_hash = hexlify(Share.swap_endian_words(hexlify(b'AR-This is a rndm 32-byte string'))).decode()    
+            self.job_kind = "foobar"
+            self.job_code = 2
+
+
+    def get_jobid(self):
+        self.job_id += 1
+        return "{}-{}".format(self.job_kind, self.job_id)
+
+    def work_notify(self, cancel_older_jobs=True):
+        return [self.get_jobid(), self.prev_block_hash, self.coinbase_1, self.coinbase_2, \
+                self.merkle_branches, self.block_version, self.nbits, self.ntime, cancel_older_jobs]
+
 
 class Share:
     @staticmethod
@@ -34,10 +77,10 @@ class Share:
       return b''.join([ message[4 * i: 4 * i + 4][::-1] for i in range(0, len(message) // 4) ])
 
     
-    def __init__(self, factory, extranonce2, ntime, nonce):
+    def __init__(self, factory, extranonce2, nonce):
         self.factory = factory
         self.extranonce2 = extranonce2
-        self.ntime = int(ntime, base=16)
+        self.ntime = factory.ntime
         self.nonce = int(nonce, base=16)
         self.job_code = factory.job_code
         self.difficulty = factory.difficulty  # WARNING: this can be per-job
@@ -48,7 +91,7 @@ class Share:
         version_bin = struct.pack("<I", int(factory.block_version, base=16))
         prev_hash_bin = Share.swap_endian_words(factory.prev_block_hash)  # must be LE
         mrt_bin = unhexlify(merkle_root)            # must be LE
-        time_bin = struct.pack("<I", self.ntime)
+        time_bin = struct.pack("<I", int(factory.ntime, base=16))
         bits_bin = struct.pack("<I", int(factory.nbits, base=16))
         nonce_bin = struct.pack("<I", self.nonce)
         self.block = version_bin + prev_hash_bin + mrt_bin + time_bin + bits_bin + nonce_bin
@@ -70,6 +113,15 @@ class Share:
     def serialize(self):
         return struct.pack('<HHIII', self.job_code, self.difficulty, int(self.extranonce2, base=16), int(self.factory.extranonce1, base=16), self.nonce)
 
+    @staticmethod
+    def unserialize(buf):
+        job_code, difficulty, extranonce2_bin, extranonce1_bin, nonce_bin = struct.unpack('<HHIII', buf)
+        extranonce1 = "{:08x}".format(extranonce1_bin)
+        work_factory = WorkFactory(JOB_TYPES[job_code], extranonce1)
+
+        extranonce2 = "{:08x}".format(extranonce2_bin)
+        nonce = "{:08x}".format(nonce_bin)
+        return Share(work_factory, extranonce2, nonce)
 
 
 class Worker:
@@ -90,33 +142,12 @@ class StratumProtocol(basic.LineOnlyReceiver):
     log = Logger()
     delimiter = b'\n'
 
-    ######################""" work parameters
-    extraNonce2_size = 4
-    coinbase_1 = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff20020862062f503253482f04b8864e5008"
-    coinbase_2 = "072f736c7573682f000000000100f2052a010000001976a914d23fcdf86f7e756a64a7a9688ef9903327048ed988ac00000000"
-    merkle_branches = [] # easier this way
-    nbits = "deadbeef"  # proof of honesty
-    ntime = "baaaaaad"
-    
-    def get_jobid(self):
-        self.job_id += 1
-        return "{}-{}".format(self.job_kind, self.job_id)
-
     def __init__(self, factory):
         self.factory = factory
         self.worker = None
         self.rpc_id = 1
-        self.last_active = None
-        self.share_per_s = None
-
-        # work parameters
-        self.block_version = hexlify(b'FOO-').decode()
-        self.prev_block_hash = hexlify(b'This is a ~random 32-byte string').decode()
-        self.job_id = 0
-        self.job_kind = "foo"
-        self.job_code = 0
-        self.difficulty = 1
-
+        #self.last_active = None
+        #self.share_per_s = None
 
     def __str__(self):
         try:
@@ -183,9 +214,10 @@ class StratumProtocol(basic.LineOnlyReceiver):
             self.log.info("subscribe from {log_source} [{mining_software}] --> {session_id}", mining_software=mining_software, session_id=session_id)
         else:
             self.log.info("re-subscribe from {log_source} [{mining_software} / {session_id}]", mining_software=mining_software, session_id=session_id)
-        self.session_id = session_id        
-        self.extranonce1 = "{:08x}".format(hash(session_id) & 0xffffff)
-        return [[['mining.notify', session_id]], self.extranonce1, self.extraNonce2_size]
+        self.session_id = session_id
+        extranonce1 = "{:08x}".format(hash(session_id) & 0xffffff)
+        self.work_factory = WorkFactory(random.choice(JOB_TYPES), extranonce1)
+        return [[['mining.notify', session_id]], self.work_factory.extranonce1, self.work_factory.extraNonce2_size]
 
 
     def authorize(self, username, password):
@@ -200,9 +232,17 @@ class StratumProtocol(basic.LineOnlyReceiver):
         reactor.callLater(0.5, self.notify)
         return True
 
+    def notify(self, cancel_older_jobs=True):
+        params = self.work_factory.work_notify(cancel_older_jobs)  
+        self.log.debug("notify {log_source}", params=params)
+        message = {'method': 'mining.notify', 'params': params, 'error': None}
+        encoded = json.dumps(message).encode() + b'\n'
+        self.transport.write(encoded)
+
+
     def submit(self, worker_name, job_id, extranonce2, ntime, nonce):
         # check whether the share is valid
-        share = Share(self, extranonce2, ntime, nonce)
+        share = Share(self.work_factory, extranonce2, nonce)
         valid = share.valid()
         if not valid:
             self.log.warn("invalid share submitted from {log_source} [{share}]", share=share)
@@ -210,7 +250,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
         
         self.log.info("valid share submitted from {log_source} [{share}]", share=share)
         self.factory.save_share(share)
-        self.share_per_s.mark()
+        self.worker.rate.mark()
         self.worker.total_shares += 1
         return True
 
@@ -220,16 +260,6 @@ class StratumProtocol(basic.LineOnlyReceiver):
         message = {'id': self.rpc_id, 'method': 'client.get_version', 'params': None, 'error': None}
         encoded = json.dumps(message).encode() + b'\n'
         self.transport.write(encoded)
-
-
-    def notify(self, cancel_older_jobs=True):
-        params=  [self.get_jobid(), self.prev_block_hash, self.coinbase_1, self.coinbase_2, \
-                 self.merkle_branches, self.block_version, self.nbits, self.ntime, cancel_older_jobs]
-        self.log.debug("notify {log_source}", params=params)        
-        message = {'method': 'mining.notify', 'params': params, 'error': None}
-        encoded = json.dumps(message).encode() + b'\n'
-        self.transport.write(encoded)
-
 
     def set_difficulty(self, difficulty=1):
         self.log.debug("set_difficulty {log_source}, new_difficulty={difficulty}", difficulty=difficulty)
@@ -309,6 +339,39 @@ class WorkerStats(Resource):
         return b'jsonWorkerCallback(' + json.dumps(L).encode() + b');'
 
 
+class ShareView(Resource):
+    isLeaf = True
+    def __init__(self, i):
+        super(ShareView, self).__init__()
+        self.i = i
+
+    def render_GET(self, request):
+        '''hack using JSONP'''
+        # validate i
+        d = {'i': self.i}
+        with open(BLOCK_FILE, 'rb') as f:
+            f.seek(self.i * 16)
+            buf = f.read(16)
+        share = Share.unserialize(buf)
+        d['block_hex'] = hexlify(share.block).decode()
+        d['hash']  = hexlify(share.block_hash()).decode()
+        d['block_ascii']  = share.block.decode('ascii', errors='replace')
+        return b'jsonShareCallback(' + json.dumps(d).encode() + b');'
+
+
+class ShareDispatch(Resource):
+    def getChild(self, name, request):
+        try:
+            i = int(name)
+            n_shares = os.path.getsize(BLOCK_FILE) // 16
+            if i >= n_shares:    
+                raise ValueError
+            return ShareView(i)
+        except:
+            return NoResource()
+        
+
+
 class  StratumSite(Resource):
     def __init__(self, factory):
         super(StratumSite, self).__init__()
@@ -320,7 +383,8 @@ class  StratumSite(Resource):
             return NavBarStats(self.factory)
         elif name == b'workers':
             return  WorkerStats(self.factory)
-
+        elif name == b'share':
+            return  ShareDispatch()
 
 class StratumCron:
     """invoqued periodically"""

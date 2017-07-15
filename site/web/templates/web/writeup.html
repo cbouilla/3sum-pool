@@ -91,13 +91,13 @@
 <h2><span style="font-family: fantasy;">3SUM</span>-pool: a special bitcoin mining pool for finding a hash collision</h2>
 
 <p>The <span style="font-family: fantasy;">3SUM</span>-pool is <em>not</em> a regular bitcoin mining pool :
-<ol>
+<ul>
 <li>Its purpose is <em>not</em> to mine bitcoins.</li>
 <li>Miners are <em>not remunerated</em>. It's not for profit!</li>
 <li>It does not interact with the bitcoin network (does not receive transactions; does not extend the blockchain).</li>
 <li>Its difficulty is set up so that miners send shares to the pool server <em>as fast as possible</em>.</li>
 <li>Its goal is to help accomplish a cryptographic feat.</li>
-</ol>
+</ul>
 </p>
 
 <p>The <span style="font-family: fantasy;">3SUM</span>-pool exists for a sole reason: accumulate and store about 12 billions blocks whose hash begins with (at least) 32 zero bits.</p>
@@ -111,8 +111,6 @@
 <p>To participate in this scheme, miners just have to <a href="/join">mine the <span style="font-family: fantasy;">3SUM</span>-pool</a>. It does not require high-end equipment: older mining rigs will do just fine.</p>
 
 <p>Once the 12 billion shares have been collected, the pool will be shut down.</p>
-
-<p>The mining work sent by the <span style="font-family: fantasy;">3SUM</span> pool server are not valid bitcoin mining jobs (<a href="/faq#no-cheat">see the FAQ</a>).</p>
 
 </div> <!-- container -->
 {%endblock main %}
