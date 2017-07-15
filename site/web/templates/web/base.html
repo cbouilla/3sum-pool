@@ -21,6 +21,8 @@
     <!-- Custom styles for this template -->
     <link href="{% static 'web/css/jumbotron.css' %}" rel="stylesheet">
 
+    <script src="{% static 'web/js/jquery.min.js' %}"></script>
+
     <!-- MathJax -->
     <script type="text/x-mathjax-config">
       MathJax.Hub.Config({
@@ -48,7 +50,7 @@
               <li class="{% active 'writeup' %}"><a href="{% url 'web:writeup' %}">Learn more</a></li>
               <li class="{% active 'join' %}"><a href="{% url 'web:join' %}">Participate</a></li>
               <li class="{% active 'faq' %}"><a href="{% url 'web:faq' %}">FAQ</a></li>
-              <li class="{% active 'data' %}"><a href="#">Data</a></li>
+              <li class="{% active 'data' %}"><a href="{% url 'web:data' %}">Data</a></li>
           </ul>
 
           <div class="navbar-right">
@@ -88,12 +90,11 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="{% static 'web/js/jquery.min.js' %}"></script>
     <script>window.jQuery || document.write('<script src="{% static 'web/js/jquery.min.js' %}"><\/script>')</script>
     <script src="{% static 'web/js/bootstrap.min.js' %}"></script>
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="{% static 'web/js/ie10-viewport-bug-workaround.js' %}"></script>
-      <script language="javascript">
+    <script language="javascript">
         function bytesToSize(bytes) {
           var sizes = ['', 'K', 'M', 'G', 'T'];
           if (bytes == 0) return 'n/a';
@@ -102,7 +103,7 @@
           return (bytes / Math.pow(1024, i)).toFixed(0) + '' + sizes[i];
         };
 
-        function jsonCallback(json){
+        function jsonNavbarCallback(json){
           $("#n_miners").html(json['miners']);
           $("#rate").html(json['rate'].toFixed(1));
           $("#shares").html(bytesToSize(json['shares']));
@@ -110,10 +111,10 @@
           $("#gauge-label").html((100 * json['shares'] / 12e9).toFixed(0))
         }
 
-    $.ajax({
-      url: "http://3sumpool.fil.cool:8080/",
-      dataType: "jsonp"
-    });
-</script>
+        $.ajax({
+          url: "http://3sumpool.fil.cool:8080/navbar",
+          dataType: "jsonp"
+        });
+    </script>
   </body>
 </html>

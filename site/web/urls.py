@@ -7,4 +7,5 @@ urlpatterns = [
     url(r'^join$', join, name='join'),
     url(r'^faq$', faq, name='faq'),
     url(r'^writeup$', writeup, name='writeup'),
+    url(r'^data$', data, name='data'),
 ]

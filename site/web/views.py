@@ -11,3 +11,6 @@ def faq(request):
 
 def writeup(request):
     return render(request, 'web/writeup.html')
+
+def data(request):
+    return render(request, 'web/data.html')

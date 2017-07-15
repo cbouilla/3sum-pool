@@ -1,0 +1,61 @@
+{% extends "web/base.html" %}
+{% block main %}
+<div class="container" id="Data">
+  
+<div class="page-header">
+  <h1>Data and Stats</h1>
+</div>
+
+
+<h2>Miners</h2>
+
+<div class="panel panel-default">
+  <table class="table" id="workers">
+    <thead>
+      <tr>
+        <th>Name</th><th>Kind</th><th>Shares</th><th>Share/s (last minute)</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+
+<h2>Shares</h2>
+
+<p>To access the content of the <code>i</code>-th share found by the miners, just go to :
+
+ <code><pre><strong>http://3sumpool.fil.cool:8080/share/i</strong></pre></code>
+
+</div> <!-- container -->
+
+<script language="javascript">
+        function bytesToSize(bytes) {
+          var sizes = ['', 'K', 'M', 'G', 'T'];
+          if (bytes == 0) return 'n/a';
+          var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+          if (i == 0) return bytes + ' ' + sizes[i];
+          return (bytes / Math.pow(1024, i)).toFixed(0) + '' + sizes[i];
+        };
+
+        function jsonWorkerCallback(json) {
+          for (var i in json) {
+            var worker = json[i]
+            console.log(worker)
+            $("#workers").find('tbody')
+              .append($('<tr>')
+                .append($('<td>').text(worker['name']))
+                .append($('<td>').text(worker['kind']))
+                .append($('<td>').text(bytesToSize(worker['shares'])))
+                .append($('<td>').text(worker['rate']))  
+              );
+          }
+        }
+
+        $.ajax({
+          url: "http://3sumpool.fil.cool:8080/workers",
+          dataType: "jsonp"
+        });
+    </script>
+{%endblock main %}
+      

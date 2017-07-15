@@ -16,7 +16,7 @@ from metrology.reporter.logger import LoggerReporter as MetrologyReporter
 from twisted.internet import reactor, protocol, endpoints
 from twisted.protocols import basic
 from twisted.logger import Logger
-from twisted.web import resource
+from twisted.web.resource import Resource
 
 BLOCK_FILE = "blocks.bin"
 STATS_FILE = "stats.bin"
@@ -79,6 +79,7 @@ class Worker:
         self.kind = kind
         self.total_shares = 0
         self.optimal_difficulty = None
+        self.rate = None
 
 #assert WorkFactory("toto").buildShare("00000000", "595a4dbe", "b59e23c3").valid()
 #assert WorkFactory().buildShare("01000000", "baaaaaad", "e5ab4003").valid()
@@ -119,7 +120,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
 
     def __str__(self):
         try:
-            return "{}".format(self.transport.getHost())
+            return "{}".format(self.transport.getPeer())
         except:
             return "???"
 
@@ -128,20 +129,20 @@ class StratumProtocol(basic.LineOnlyReceiver):
         self.log.debug("connection established from {log_source}")
         self.factory.active_connections.add(self)
         self.factory.miner_count.increment()
+        self.peer = self.transport.getPeer()
 
     def connectionLost(self, reason):
         # log the deconnection
-        self.log.debug("connection lost from {log_source}")
+        self.log.debug("connection lost from {log_source} / {peer}", peer=self.peer)
         self.factory.miner_count.decrement()
         try:
-            self.active_connections.remove(self)
-        except:
-            self.log.warn("bizarre {log_source}")
+            self.factory.active_connections.remove(self)
+        except Exception as e:
+            self.log.warn("bizarre {log_source}: {e}", e=e)
 
 
     def lineReceived(self, line):
         #self.log.debug("received from {log_source}: {line}", line=line)
-
         try:
             rpc = json.loads(line.strip().decode())
         except:
@@ -177,9 +178,11 @@ class StratumProtocol(basic.LineOnlyReceiver):
 
 
     def subscribe(self, mining_software=None, session_id=None):
-        self.log.info("subscribe from {log_source} [{mining_software} / {session_id}]", mining_software=mining_software, session_id=session_id)
         if not session_id:
             session_id = str(uuid.uuid4())
+            self.log.info("subscribe from {log_source} [{mining_software}] --> {session_id}", mining_software=mining_software, session_id=session_id)
+        else:
+            self.log.info("re-subscribe from {log_source} [{mining_software} / {session_id}]", mining_software=mining_software, session_id=session_id)
         self.session_id = session_id        
         self.extranonce1 = "{:08x}".format(hash(session_id) & 0xffffff)
         return [[['mining.notify', session_id]], self.extranonce1, self.extraNonce2_size]
@@ -187,15 +190,13 @@ class StratumProtocol(basic.LineOnlyReceiver):
 
     def authorize(self, username, password):
         self.log.info("authorize from {log_source} [{username} / {password}]", username=username, password=password)
-        # try to fetch the worker from the global database
-        # if it fails, create it
         try:
             self.worker = self.factory.workers[username]
         except KeyError:
             self.worker = Worker(username, password)
+            self.factory.workers[username] = self.worker
             self.log.info('registering new worker {worker}', worker=self.worker)
-        self.share_per_s = Metrology.meter('shares-{}'.format(username))
-        
+        self.worker.rate = Metrology.meter('shares-{}'.format(username))
         reactor.callLater(0.5, self.notify)
         return True
 
@@ -208,8 +209,9 @@ class StratumProtocol(basic.LineOnlyReceiver):
             return False
         
         self.log.info("valid share submitted from {log_source} [{share}]", share=share)
-        self.share_per_s.mark()
         self.factory.save_share(share)
+        self.share_per_s.mark()
+        self.worker.total_shares += 1
         return True
 
     def ping(self):
@@ -236,35 +238,20 @@ class StratumProtocol(basic.LineOnlyReceiver):
         self.transport.write(encoded)
 
 
-#class LogWrapper(Logger):
-#    def __init__(self, *args, **kwargs):
-#        super(LogWrapper, self).__init__(*args, **kwargs)
-#    def log(self, level, *args, **kwargs):
-#        self.info(*args, **kwargs)
-
-
-
 class StratumFactory(protocol.Factory):
     """Hold the global state of the Stratum server"""
     log = Logger(namespace="Stratum")
     block_file = None
     workers = {}
-    active_connections = set()
 
     def __init__(self):
         # miners we must send work to
         self.miner_count = Metrology.counter('active-miners')
         self.share_per_s = Metrology.meter('shares')
-        #self.metrology_reporter = MetrologyReporter(level=logging.DEBUG, logger=self.log, interval=10)
+        self.active_connections = set()
 
     def buildProtocol(self, addr):
         return StratumProtocol(self)
-
-    def wake_clients(self):
-        for conn in self.active_connections:
-            #conn.check_activity()
-            #conn.ping()
-            pass
 
     def save_share(self, share):
         self.block_file.write(share.serialize())
@@ -277,7 +264,6 @@ class StratumFactory(protocol.Factory):
                 self.workers = pickle.load(f)
         except Exception as e:
             self.log.warn('impossible to load stats : {}'.format(e))
-        #self.metrology_reporter.start()
 
     def stopFactory(self):
         self.block_file.close()
@@ -286,16 +272,17 @@ class StratumFactory(protocol.Factory):
                 pickle.dump(self.workers, f)
         except Exception as e:
             self.log.error('impossible to save stats : {}'.format(e))
-        #self.metrology_reporter.stop()
 
 
 
-class StratumSite(resource.Resource):
-    """the HTTP server that responds to JSON requests from clients"""
+class NavBarStats(Resource):
+    """the HTTP server that responds to JSON requests from clients for the navbar"""
+    isLeaf = True
+
     def __init__(self, factory):
+        super(NavBarStats, self).__init__()
         self.factory = factory
 
-    isLeaf = True
     def render_GET(self, request):
         '''hack using JSONP'''
         request.responseHeaders.addRawHeader(b"content-type", b"application/json")
@@ -303,7 +290,36 @@ class StratumSite(resource.Resource):
         d['miners'] = self.factory.miner_count.count
         d['rate'] = self.factory.share_per_s.one_minute_rate
         d['shares'] = os.path.getsize(BLOCK_FILE) // 16 # each share is stored on 16 bytes
-        return b'jsonCallback(' + json.dumps(d).encode() + b');'
+        return b'jsonNavbarCallback(' + json.dumps(d).encode() + b');'
+
+
+class WorkerStats(Resource):
+    isLeaf = True
+    def __init__(self, factory):
+        super(WorkerStats, self).__init__()
+        self.factory = factory
+
+    def render_GET(self, request):
+        '''hack using JSONP'''
+        request.responseHeaders.addRawHeader(b"content-type", b"application/json")
+        L = []
+        for name, worker in self.factory.workers.items():
+            d = {'name': name, 'kind': worker.kind, 'shares': worker.total_shares, 'D': worker.optimal_difficulty, 'rate':  worker.rate.one_minute_rate}
+            L.append(d)
+        return b'jsonWorkerCallback(' + json.dumps(L).encode() + b');'
+
+
+class  StratumSite(Resource):
+    def __init__(self, factory):
+        super(StratumSite, self).__init__()
+        self.factory = factory
+
+    def getChild(self, name, request):
+        print("getchild {}".format(name))
+        if name == b'navbar':
+            return NavBarStats(self.factory)
+        elif name == b'workers':
+            return  WorkerStats(self.factory)
 
 
 class StratumCron:
@@ -317,3 +333,8 @@ class StratumCron:
             self.factory.block_file.flush()
         except:
             log.error("Couldn't flush block file")
+
+        for conn in self.factory.active_connections:
+            conn.ping()
+
+    
