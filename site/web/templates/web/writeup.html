@@ -43,10 +43,10 @@
   <dt>GIVEN:</dt>
   <dd>
     <ul>
-        <li>the hash of the previous block</li>
+        <li>the hash of the previous block (the last one in the blockchain)</li>
         <li>the current time</li>
         <li>the current network difficulty</li>
-        <li>a list of transactions to include in a new block</li>
+        <li>a list of pending transactions to include in a new block</li>
     </ul>
   </dd>
   <dt>FIND:</dt>
@@ -75,7 +75,7 @@
 
 <p>Every $\approx$ 10 minutes, the blockchain is extended by a new block, and a miner cashes in the reward. Each miner stands a chance being the lucky one proportional to its hashrate. For instance, at the time of this writing, one can buy (for a few hundred dollars) a bitcoin mining rig whose hashrate is about 1'000'000 times less than the global hashrate of all combined miners. Its owner has 1 chance over 1'000'000 to extend the blockchain every 10 minutes, and the device has an expected lifetime of two years. A quick computation shows that the owner stands a 10% chance to extend the blockchain before it stops functionning. So, with 90% probability, the investment in the mining device and in electricity will be entirely lost when the device dies.</p>
 
-<p>To alleviate this problem, many miners can join forces and form a <em>mining pool</em> (see also the <a href="https://en.bitcoin.it/wiki/Pooled_mining">"pooled mining" entry of the bitcoin wiki</a>).</p> 
+<p>To alleviate this problem, many miners can join forces and form a <em>mining pool</em> (see also the <a href="https://en.bitcoin.it/wiki/Pooled_mining">"pooled mining"</a> entry of the bitcoin wiki).</p> 
 
 <p>In a pool, miners are remunerated much more regularly (typically, daily) and proportionnaly to their hashrate. Concretely, this means that in a pool, when a miner solves the current bitcoin puzzle, it reports its solution to the pool manager. The pool manager uses it to extend the blockchain, and cashes in the reward.</p>
 
@@ -96,11 +96,11 @@
 <li>Miners are <em>not remunerated</em>. It's not for profit!</li>
 <li>It does not interact with the bitcoin network (does not receive transactions; does not extend the blockchain).</li>
 <li>Its difficulty is set up so that miners send shares to the pool server <em>as fast as possible</em>.</li>
-<li>Its goal is to help accomplish a cryptographic feat.</li>
+<li>Its goal is to help accomplish a large cryptographic computation.</li>
 </ul>
 </p>
 
-<p>The <span style="font-family: fantasy;">3SUM</span>-pool exists for a sole reason: accumulate and store about 12 billions blocks whose hash begins with (at least) 32 zero bits.</p>
+<p>The <span style="font-family: fantasy;">3SUM</span>-pool exists for a sole reason: accumulate and store (at least) 12 billions blocks whose hash begins with (at least) 32 zero bits.</p>
 
 <p>The pool works as follows: a <a href="https://github.com/cbouilla/3sum-pool">custom-made stratum server</a> sends arbitrary mining jobs to the miners in the pool. When miners send back shares, the server simply stores them. A share is precisely a block starting with (at least) 32 zero bits.</p>
 
