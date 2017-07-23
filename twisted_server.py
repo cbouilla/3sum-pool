@@ -21,7 +21,7 @@ from twisted.web.resource import Resource, NoResource
 BLOCK_FILE = "blocks.bin"
 STATS_FILE = "stats.bin"
 JOB_TYPES = ['FOO', 'BAR', 'FOOBAR']
-
+HASHRATE_ESTIMATION_DIFFICULTY = 1024
 
 class WorkFactory:
    ######################""" work parameters
@@ -97,7 +97,7 @@ class Share:
         self.block = version_bin + prev_hash_bin + mrt_bin + time_bin + bits_bin + nonce_bin
 
     def __str__(self):
-        return "({} / {} / {} / {:08x} / {:08x})".format(self.job_code, self.difficulty, self.extranonce2, self.ntime, self.nonce)
+        return "({} / {} / {} / {} / {})".format(self.job_code, self.difficulty, self.extranonce2, self.ntime, self.nonce)
 
     def block_hash(self):
         return Share.sha256d(self.block)
@@ -125,13 +125,115 @@ class Share:
 
 
 class Worker:
-    """Contains the persistent state of the worker (saved accross connections)"""
+    """Contains:
+       + the persistent state of the worker (saved accross connections)
+       + methods that deal with work selection
+       """
     def __init__(self, name, kind):
         self.name = name
         self.kind = kind
         self.total_shares = 0
-        self.optimal_difficulty = None
+        self.optimal_difficulty = None   # difficulty maximizing (Difficulty**1/3 * Rate)
         self.rate = None
+        self.maximum_hashrate = None     # hashrate at large difficulty
+        self.state = "Starting up"
+        self.connection = None
+
+    def __getstate__(self):
+        """pickler that resets volatile state"""
+        state = self.__dict__.copy()
+        state['connection'] = None
+        state['rate'] = None
+        return state
+
+    def share_submitted(self):
+        if not self.rate:
+            self.rate = Metrology.meter('shares-{}'.format(self.name))
+        self.rate.mark()
+        self.total_shares += 1
+
+
+    def get_to_work(self):
+        if self.optimal_difficulty:
+            self.production()
+        elif self.maximum_hashrate:
+            self.find_optimal_difficulty()
+        else:
+            self.estimate_hashrate()   
+
+    def production(self):
+        self.state = "Production"
+        self.connection.log.info("going into production ({log_source}) at difficulty {difficulty}", difficulty=self.optimal_difficulty)
+        self.connection.set_difficulty(self.optimal_difficulty)
+        self.connection.notify()
+
+    def rate_estimation_start(self, difficulty, callback, timeout=80):
+        """Set the difficulty to `difficulty`, send work and wait for `timeout` seconds. 
+           Then fire `callback(difficulty, rate)`. If the rate could not be computed, it is set to None.
+        """
+        self.connection.set_difficulty(difficulty)
+        self.connection.notify()
+        reactor.callLater(timeout, self.rate_estimation_end, difficulty, callback)
+
+    def rate_estimation_end(self, difficulty, callback):
+        if not self.rate:
+            self.connection.log.info("rate estimation failed for {log_source} at difficulty {difficulty}", difficulty=difficulty)
+            rate = None
+        else:
+            rate = self.rate.one_minute_rate
+            self.connection.log.info("Estimated rate of {rate} at difficulty {difficulty} for {log_source}", rate=rate, difficulty=difficulty)
+        callback(difficulty, rate)
+
+    def estimate_hashrate(self):
+        def hashrate_estimation_callback(difficulty, rate):
+            if rate is None:
+                self.maximum_hashrate = 50e6     # educated guess; it's probably a CPU miner
+            else:
+                self.maximum_hashrate = rate * difficulty * (1 << 32)
+            self.find_optimal_difficulty()
+
+        self.state = "Estimating hashrate"
+        self.connection.log.info("starting maximum hashrate estimation ({log_source})")
+        self.rate_estimation_start(HASHRATE_ESTIMATION_DIFFICULTY, hashrate_estimation_callback)
+
+
+    def find_optimal_difficulty(self):
+        def optimal_difficulty_callback(difficulty, rate):
+            if rate is None:
+                # stop search, difficulty too high, exploit previous results
+                optimal_difficulty_continuation()
+                return
+            else:
+                self.difficulty_search[difficulty] = rate
+                hashrate = rate * difficulty * (1 << 32)
+                objective = rate * (difficulty**(1/3))
+                # stop if we are at 95% of full hashrate and objective function is decreasing
+                if hashrate >= 0.95 * self.maximum_hashrate and objective <= 0.95 * self.difficulty_best_objective:
+                    optimal_difficulty_continuation()
+                    return
+                self.difficulty_best_objective = max(self.difficulty_best_objective, objective)
+                self.rate_estimation_start(difficulty+1, optimal_difficulty_callback)
+
+        def optimal_difficulty_continuation():
+            best_objective = 1
+            best_difficulty = 1
+            for difficulty, rate in self.difficulty_search.items():
+                objective = rate * (difficulty**(1/3))
+                if objective > best_objective:
+                    best_objective = objective
+                    best_difficulty = difficulty
+
+            self.connection.log.info("Optimal difficulty: {difficulty}, with objective={objective:.1f} ({log_source})", 
+                difficulty=best_difficulty, objective=best_objective)
+            self.optimal_difficulty = best_difficulty
+            self.production()
+
+        self.connection.log.info("starting optimal difficulty search ({log_source})")
+        self.state = "Finding optimal difficulty"
+        self.difficulty_search = {}
+        self.difficulty_best_objective = 0
+        self.rate_estimation_start(1, optimal_difficulty_callback)
+
 
 #assert WorkFactory("toto").buildShare("00000000", "595a4dbe", "b59e23c3").valid()
 #assert WorkFactory().buildShare("01000000", "baaaaaad", "e5ab4003").valid()
@@ -228,9 +330,10 @@ class StratumProtocol(basic.LineOnlyReceiver):
             self.worker = Worker(username, password)
             self.factory.workers[username] = self.worker
             self.log.info('registering new worker {worker}', worker=self.worker)
-        self.worker.rate = Metrology.meter('shares-{}'.format(username))
-        reactor.callLater(0.5, self.notify)
+        self.worker.connection = self
+        reactor.callLater(0.5, self.worker.get_to_work)
         return True
+
 
     def notify(self, cancel_older_jobs=True):
         params = self.work_factory.work_notify(cancel_older_jobs)  
@@ -238,7 +341,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
         message = {'method': 'mining.notify', 'params': params, 'error': None}
         encoded = json.dumps(message).encode() + b'\n'
         self.transport.write(encoded)
-
+        self.worker.rate = None
 
     def submit(self, worker_name, job_id, extranonce2, ntime, nonce):
         # check whether the share is valid
@@ -250,8 +353,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
         
         self.log.info("valid share submitted from {log_source} [{share}]", share=share)
         self.factory.save_share(share)
-        self.worker.rate.mark()
-        self.worker.total_shares += 1
+        self.worker.share_submitted()
         return True
 
     def ping(self):
@@ -401,4 +503,10 @@ class StratumCron:
         for conn in self.factory.active_connections:
             conn.ping()
 
-    
+#
+# N_k blocs avec k bits à zéro (k >= 32)
+#
+# [2**(32/3) * N_32] ** 3 == 2**n 
+# [2**(36/3) * N_36] ** 3 == 2**n 
+#
+# sum_k 2**(k/3) * N_k == 2**n
