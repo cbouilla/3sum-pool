@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block data_active %}active{% endblock %}
+
+{% block main %}
+<div class="container" id="Data">
+  
+<div class="page-header">
+  <h1>Data and Stats</h1>
+</div>
+
+
+<h2>Miners</h2>
+
+<div class="panel panel-default">
+  <table class="table" id="workers">
+    <thead>
+      <tr>
+        <th>Name</th><th>Kind</th><th>Best hashrate</th><th>Difficulty</th><th>Submitted shares</th><th>Eq. diff-1 shares</th><th>Share/s (last minute)</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+</div>
+
+<h2>Shares</h2>
+
+<p>To access the content of the <code>i</code>-th share found by the miners, just go to :
+
+ <code><pre><strong>http://3sumpool.fil.cool:8080/share/i</strong></pre></code>
+
+</div> <!-- container -->
+{%endblock main %}
+
+{% block extrascript %}
+  <script src="js/workers.js"></script>
+{% endblock %}      

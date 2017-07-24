@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block join_active %}active{% endblock %}
+
+{% block main %}
+<div class="container">    
+
+  <div class="page-header">
+    <h1>Joining the <span style="font-family: fantasy;">3SUM</span>-pool</h1>
+  </div>
+
+  <p><strong style="color: red; font-size: 150%">ONE MORE TIME : YOU WILL NOT BE PAID ANYTHING FOR PARTICIPATING TO THIS POOL</strong>.</p>
+
+  <p class="lead">This being said, contributing to the collision search is very easy.</p>
+
+  <h2>1. Configure your device</h2>
+
+  Your miner has to be pointed to the stratum server below :
+  <code><pre>URL: <strong>stratum+tcp://3sumpool.fil.cool:9998</strong>
+userID: <strong style="color: darkred;">userName</strong>
+password: <strong style="color: #13AF6A">deviceDescription</strong></pre>
+  </code>
+
+  <p>You can use any <strong style="color: darkred;">userName</strong> you want (for instance: <code>firstName.lastName</code> or <code>email@provider.com</code> or <code>nastyPseudonym</code> or <code>anonymous.coward</code>). There is no authentication mecanism and you don't have to register anywhere. <em>Please keep in mind that your <strong style="color: darkred;">userName</strong> will be visible on this website.</em></p>
+
+  <p>Please set <strong style="color: #13AF6A">deviceDescription</strong> (the password) to something that identifies the model of your mining device (e.g. <code>AntMinerS5</code>, <code>Avalon741</code>, <code>GekkoScience</code>, ...).</p>            
+
+  <p>If you have several mining devices (yay!), you may give them distinct <strong style="color: darkred;">userName</strong>s, but you don't have to.</p>
+  
+  <h2>2. Track your contribution</h2>
+    
+  See the <a href="data.html">Data page</a>.
+
+
+  </div> <!-- /container -->
+{% endblock main %}

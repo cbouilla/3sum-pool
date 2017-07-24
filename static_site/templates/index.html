@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block main %}
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+        <h1>Help us mine <del>bitcoins</del> hash collisions</h1>
+        <p>Let's put your bitcoin mining equipment to proper use: finding a partial (128-bit) 3-way collision for SHA-256.</p>
+        <p>
+        <p><a class="btn btn-success btn-lg" role="button" href="join.html">I want to help &raquo;</a></p>
+      </div>
+    </div>
+
+    <div class="container">    
+      <div class="row">
+        <div class="col-md-4">
+          <h2>What is this?</h2>
+          <p>This is a project to crowdsource a large cryptologic computation amongst bitcoin miners.</p> 
+
+          <p style="margin-bottom: 0px">The combined computational power of bitcoin miners is amazing, but it's only for mining bitcoins. However, we can use it to find some kind of collision in a secure hash function.</p>
+        </div>
+        <div class="col-md-4">
+          <h2>Why do this?</h2>
+          <p>For fun, and science!</p>
+             We want to show that the computationnal power of cryptocurrency mining equipment could be used for cryptanalytic purposes. We think that forging a 128-bit partial collision on SHA-256 proves our point.
+          </p>
+       </div>
+        <div class="col-md-4">
+          <h2>Who we are?</h2>
+          <p>We are a group of french academic researchers in cryptology:
+          <ul>
+          <li><a href="">Charles Bouillaguet</a> (<a href="http://www.univ-lille1.fr/home/">University of Lille-1</a>)</li>
+          <li>Claire Delaplace (IRISA)</li>
+          <li><a href="">Pierre-Alain Fouque</a> (<a href="https://www.univ-rennes1.fr/">University of Rennes-1</a>)</li>
+          </ul>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row">
+      
+        <div class="col-md-4">
+          <h2>How does it work?</h2>
+          <p>The <span style="font-family: fantasy;">3SUM</span>-pool is a special not-for-profit bitcoin mining pool. 
+             <!--Miners participating in this pool don't produce bitcoins and are not remunerated.</p>-->
+          Miners participating in this pool contribute their power to the forgery of a (partial) hash collision.</p>
+           <div class="row">
+            <div class="col-md-5 col-md-offset-1">
+              <a href="writeup.html" role="button" class="btn btn-info btn-block btn-lg">Learn more &raquo;</a>
+            </div>
+            <div class="col-md-5">
+              <a href="faq.html" role="button" class="btn btn-primary btn-block btn-lg">FAQ &raquo;</a>
+            </div>
+          </div>
+       </div>
+      
+       <div class="col-md-4">
+          <h2>We need your help!</h2>
+          <p>Use your bitcoin mining rig to help us accomplish a cryptographic feat. It can be helpful to us even if it cannot bring you a profit in bitcoin mining.</p>
+          <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+              <a href="join.html" role="button" class="btn btn-success btn-block btn-lg">Join the pool &raquo;</a>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="col-md-4">
+          <h2>Follow us and get in touch</h2>
+          <p>Questions, feedback and encouragement messages are welcome!</br>
+          <p><span class="glyphicon glyphicon-envelope"></span> <a href="mailto:3sumpool@gmail.com">3sumpool@gmail.com</a></p>
+             <p><a class="twitter-follow-button" href="https://twitter.com/3sumpool">Follow @3sumpool</a></p>
+        </div>
+      </div>
+
+
+
+<script>window.twttr = (function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0],
+    t = window.twttr || {};
+  if (d.getElementById(id)) return t;
+  js = d.createElement(s);
+  js.id = id;
+  js.src = "https://platform.twitter.com/widgets.js";
+  fjs.parentNode.insertBefore(js, fjs);
+
+  t._e = [];
+  t.ready = function(f) {
+    t._e.push(f);
+  };
+
+  return t;
+}(document, "script", "twitter-wjs"));</script>
+
+</div> <!-- container -->
+{%endblock main %}
+      
