@@ -22,6 +22,7 @@ BLOCK_FILE = "blocks.bin"
 STATS_FILE = "stats.bin"
 JOB_TYPES = ['FOO', 'BAR', 'FOOBAR']
 HASHRATE_ESTIMATION_DIFFICULTY = 1024
+HASHRATE_ESTIMATION_MINIMUM = 4
 
 class WorkFactory:
    ######################""" work parameters
@@ -154,18 +155,17 @@ class Worker:
 
 
     def get_to_work(self):
+        """A miner goes through the following states
+           1) hashrate estimation
+           2) optimal difficulty search
+           3) production
+        """
         if self.optimal_difficulty:
             self.production()
         elif self.maximum_hashrate:
             self.find_optimal_difficulty()
         else:
             self.estimate_hashrate()   
-
-    def production(self):
-        self.state = "Production"
-        self.connection.log.info("going into production ({log_source}) at difficulty {difficulty}", difficulty=self.optimal_difficulty)
-        self.connection.set_difficulty(self.optimal_difficulty)
-        self.connection.notify()
 
     def rate_estimation_start(self, difficulty, callback, timeout=80):
         """Set the difficulty to `difficulty`, send work and wait for `timeout` seconds. 
@@ -184,12 +184,22 @@ class Worker:
             self.connection.log.info("Estimated rate of {rate} at difficulty {difficulty} for {log_source}", rate=rate, difficulty=difficulty)
         callback(difficulty, rate)
 
+
     def estimate_hashrate(self):
         def hashrate_estimation_callback(difficulty, rate):
-            if rate is None:
-                self.maximum_hashrate = 50e6     # educated guess; it's probably a CPU miner
+            if rate is None or rate <= HASHRATE_ESTIMATION_MINIMUM:
+                if difficulty == 1:
+                    self.maximum_hashrate = 50e6     # educated guess; it's probably a CPU miner
+                    hashrate_estimation_continuation()
+                else:
+                    # restart with lower difficulty
+                    self.rate_estimation_start(max(1, difficulty//16), hashrate_estimation_callback)
             else:
                 self.maximum_hashrate = rate * difficulty * (1 << 32)
+                hashrate_estimation_continuation()                
+
+        def hashrate_estimation_continuation():
+            self.connection.log.info("Maximum hashrate found: {hashrate} ({log_source})", hashrate=self.maximum_hashrate)
             self.find_optimal_difficulty()
 
         self.state = "Estimating hashrate"
@@ -233,6 +243,12 @@ class Worker:
         self.difficulty_search = {}
         self.difficulty_best_objective = 0
         self.rate_estimation_start(1, optimal_difficulty_callback)
+
+    def production(self):
+        self.state = "Production"
+        self.connection.log.info("going into production ({log_source}) at difficulty {difficulty}", difficulty=self.optimal_difficulty)
+        self.connection.set_difficulty(self.optimal_difficulty)
+        self.connection.notify()
 
 
 #assert WorkFactory("toto").buildShare("00000000", "595a4dbe", "b59e23c3").valid()
