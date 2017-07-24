@@ -134,6 +134,7 @@ class Worker:
         self.name = name
         self.kind = kind
         self.total_shares = 0
+        self.diff1_shares = 0
         self.optimal_difficulty = None   # difficulty maximizing (Difficulty**1/3 * Rate)
         self.rate = None
         self.maximum_hashrate = None     # hashrate at large difficulty
@@ -152,7 +153,7 @@ class Worker:
             self.rate = Metrology.meter('shares-{}'.format(self.name))
         self.rate.mark()
         self.total_shares += 1
-
+        self.diff1_shares += self.optimal_difficulty ** (1/3)
 
     def get_to_work(self):
         """A miner goes through the following states
@@ -452,7 +453,24 @@ class WorkerStats(Resource):
         request.responseHeaders.addRawHeader(b"content-type", b"application/json")
         L = []
         for name, worker in self.factory.workers.items():
-            d = {'name': name, 'kind': worker.kind, 'shares': worker.total_shares, 'D': worker.optimal_difficulty, 'rate':  worker.rate.one_minute_rate}
+            d = {}
+            d['name'] = name
+            d['kind'] = worker.kind
+            d['total_shares'] = worker.total_shares
+            d['diff1_shares'] = worker.diff1_shares
+            d['state'] = worker.state
+            if worker.maximum_hashrate:
+                d['maximum_hashrate'] = worker.maximum_hashrate
+            else:
+                d['maximum_hashrate'] = 0
+            if worker.optimal_difficulty:
+                d['D'] = worker.optimal_difficulty
+            else:
+                d['D'] = '???'
+            if worker.rate:
+                d['rate'] = worker.rate.one_minute_rate
+            else:
+                d['rate'] = 'offline'
             L.append(d)
         return b'jsonWorkerCallback(' + json.dumps(L).encode() + b');'
 
