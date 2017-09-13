@@ -1,0 +1,22 @@
+[Unit]
+Description=Stratum pool server
+
+[Service]
+Environment="PYTHONPATH=."
+
+ExecStart=/usr/bin/twistd3 \
+    --nodaemon \
+    --pidfile= \
+    --python=stratum.tac
+
+WorkingDirectory=/home/admin/my_stratum
+
+User=admin
+Group=admin
+
+Restart=always
+
+
+
+[Install]
+WantedBy=multi-user.target
