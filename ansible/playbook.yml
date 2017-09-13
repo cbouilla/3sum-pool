@@ -19,7 +19,23 @@
          dest=/home/admin/my_stratum
 
 # python packages
-  - name: ensure other required python v3.x packages are present
+  - name: python v3.x packages (PIP)
     sudo: yes
-    pip: requirements=/home/admin/my_stratum/ansible/requirements.txt executable=pip3
+    pip:
+      requirements: /home/admin/my_stratum/ansible/requirements.txt
+      executable: pip3
 
+  
+  - name: copy service file
+    sudo: yes
+    copy: 
+      src: stratum.service 
+      dest: /etc/systemd/system/
+
+  - name: stratum server is running
+    sudo: yes
+    systemd:
+      name: stratum
+      daemon_reload: yes
+      state: started
+      enabled: yes

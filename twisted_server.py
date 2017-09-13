@@ -153,7 +153,8 @@ class Worker:
             self.rate = Metrology.meter('shares-{}'.format(self.name))
         self.rate.mark()
         self.total_shares += 1
-        self.diff1_shares += self.optimal_difficulty ** (1/3)
+        if hasattr(self, 'optimal_difficulty'):
+            self.diff1_shares += self.optimal_difficulty ** (1/3)
 
     def get_to_work(self):
         """A miner goes through the following states
