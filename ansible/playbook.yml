@@ -1,0 +1,25 @@
+---
+- hosts: 52.5.252.107
+  remote_user: admin
+  tasks:
+
+# debian packages  
+  - name: ensure required debian packages are present
+    apt: pkg={{ item }} state=present
+    sudo: yes
+    with_items:
+      - emacs24-nox
+      - debian-goodies
+      - git
+      - python3-twisted # required to install the rest
+
+# sources
+  - name: checkout custom stratum server
+    git: repo=https://github.com/cbouilla/3sum-pool.git
+         dest=/home/admin/my_stratum
+
+# python packages
+  - name: ensure other required python v3.x packages are present
+    sudo: yes
+    pip: requirements=/home/admin/my_stratum/ansible/requirements.txt executable=pip3
+
