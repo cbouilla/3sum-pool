@@ -5,7 +5,7 @@ from twisted.python.logfile import DailyLogFile
 
 from twisted_server import StratumFactory, StratumSite, StratumCron
 
-port = 9998
+port = 3333
 
 # Create a MultiService
 stratumService = service.MultiService()
