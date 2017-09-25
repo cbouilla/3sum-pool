@@ -118,6 +118,8 @@ class Share:
 
 N = [0, 0, 0]
 i = 0
+print("block file is {} bytes".format(os.path.getsize(BLOCK_FILE)))
+print("Expecting {} complete blocks".format(os.path.getsize(BLOCK_FILE) // 16))
 with open(BLOCK_FILE, 'rb') as f:
     while True:
         b = f.read(16)
@@ -131,4 +133,6 @@ with open(BLOCK_FILE, 'rb') as f:
         if not s.valid():
             print("Invalid block {}! bad hash".format(i))
         i += 1
+        print("Checking block {}".format(i), end='\r', flush=True)
+print()
 print("Successfully read {} blocks. FOO / BAR / FOOBAR : {}".format(i, N))
