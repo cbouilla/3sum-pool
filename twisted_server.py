@@ -299,7 +299,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
             return
 
         if 'method' not in rpc:
-            self.log.debug("got response ({line})", line=line)
+            #self.log.debug("got response ({line})", line=line)
             return
 
         if 'params' not in rpc:
@@ -373,7 +373,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
         return True
 
     def ping(self):
-        self.log.debug("sending ping to {log_source}")
+        #self.log.debug("sending ping to {log_source}")
         self.rpc_id += 1
         message = {'id': self.rpc_id, 'method': 'client.get_version', 'params': None, 'error': None}
         encoded = json.dumps(message).encode() + b'\n'
@@ -513,7 +513,6 @@ class  StratumSite(Resource):
         self.factory = factory
 
     def getChild(self, name, request):
-        print("getchild {}".format(name))
         if name == b'navbar':
             return NavBarStats(self.factory)
         elif name == b'workers':
