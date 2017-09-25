@@ -11,6 +11,13 @@
       fstype: ext4
       dev: /dev/xvdb
 
+  - name: ensure mountpoint has correct permissions
+    become: true
+    file:
+      path: /mnt/large
+      owner: admin
+      state: directory
+
   - name: extra volume is mounted
     become: true
     mount:
