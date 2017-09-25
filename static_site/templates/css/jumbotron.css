@@ -8,3 +8,7 @@ body {
 	margin-top: 15px;
 	margin-bottom: 2px;
 }
+
+#FAQ blockquote {
+	font-size: 15.5px;
+}

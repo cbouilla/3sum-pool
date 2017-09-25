@@ -74,9 +74,8 @@ Here is a partial 3SUM on 96-bits:
 
 
       <h4>Aren't there more sophisticated algorithms to compute a 3SUM?</h4>
-      <p>Yes there are. For instance, there is the algorithm described in Antoine Joux's book "Algorithmic Cryptanalysis". Joux's algorithm would in theory require 12 times less hashes than the simpler technique we are using. However, it would also require the storage of an absurdly high volume of data (<em>millions of terabytes</em>). It thus seems completely impractical.</p>
-      <p>We also believe that better algorithms could be designed for the job, and we intend to test them.</p>
-
+      <p>Yes there are. For instance, there is the algorithm invented in 2015 by Ivica Nikolic and Yu Sasaki and described in <a href="https://eprint.iacr.org/2016/312">a research paper</a>. In theory, it would require 3.4 times less hashes than the simpler technique outlined above. However, it would also require the storage of an absurdly high volume of data (<em>millions of terabytes</em>). It thus seems completely impractical for our purpose. Earlier, in 2008, <a href="http://web.mit.edu/~ibaran/www/">Ilya Baran</a>, <a href="http://erikdemaine.org/">Erik Demaine</a>, and <a href="http://people.csail.mit.edu/mip">Mihai Pătraşcu</a> suggested a (better) algorithm in <a href="http://people.csail.mit.edu/mip/papers/3sum/3sum.pdf">another research paper</a>. We currently believe that it cannot be faster in practice than the naive ideas for relevant parameters ranges.
+      We are investigating a technique invented by <a href="https://www-almasty.lip6.fr/~joux/">Antoine Joux</a> and described in his book <a href="http://joux.biz">Algorithmic Cryptanalysis"</a>, that we believe could be practically faster.</p>
 
 
 <h3><u>Mining the Pool</u></h3>
@@ -110,7 +109,7 @@ Here is a partial 3SUM on 96-bits:
 
 
       <h4>How many shares do you need?</h4>
-      <p>We need roughly <code>12'000'000'000</code> shares at difficulty one and (see below) slighlty less at a higher difficulty.
+      <p>We need roughly <code>12'000'000'000</code> shares at difficulty one, or slighlty less at a higher difficulty (see below).
 
 
       <h4 id="difficulty">What is the difficulty of this pool?</h4>
@@ -118,8 +117,8 @@ Here is a partial 3SUM on 96-bits:
 
 
       <h4>Why not just set the difficulty to 1?</h4>
-      <p>As stated above, our goal is to get 12 billion shares as fast as possible. Shares are produced faster at low difficulty, so why not set the difficulty to one?</p>
-      <p>One problem is that the <i>controller</i> of your mining rig (probably a low-cost ARM device such as a Raspberry Pi or a BeagleBoard) is not capable of reporting shares very frequently (in normal bitcoin mining, reporting shares is infrequent, so it doesn't matter). Our experience with some devices suggest that they are incapable of reporting more than 60 shares/s.</p>
+      <p>As stated above, our goal is to get 12 billion shares as fast as possible. Miners produce shares faster at low difficulty, so indeed it would be rational to set the difficulty to the minimum.</p>
+      <p>One problem is that the <i>controller</i> of most mining rigs (probably a low-cost ARM device such as a Raspberry Pi or a BeagleBoard) is not capable of reporting shares very frequently (in normal bitcoin mining, reporting shares is infrequent, so it doesn't matter). Our experience with some devices suggest that they are incapable of reporting more than 60 shares/s.</p>
       <p>For this reason, we adjust the difficulty to maximize computational efficiency.</p>
 
 
@@ -155,6 +154,7 @@ Here is a partial 3SUM on 96-bits:
       <h4 id="no-cheat">How do I know that this pool doesn't actually mine bitcoins for someone's profit?</h4>
       <p>To make it very clear that we are not mining bitcoins, we only send to the miners blocks that cannot in any way encode valid bitcoin transactions. For instance, instead of begining with a 32-bit block version number (valid values are 1, 2 or 3), our blocks begin with the strings <samp>FOO</samp>, <samp>BAR</samp> or <samp>FOOBAR</samp>. In addition, instead of including a valid network time, we include the number <samp>0xdeadbeef</samp>. No bitcoin node will ever accept these blocks and they will never be included in the blockchain. As such, they can't be used to acquire bitcoins.</p>
       <p>In addition, the low pool difficulty makes it extremely unlikely that the shares sent by the miners to the pool server meet the current difficulty level of the global bitcoin network.</p>
+      <p>Lastly, and even though it is not as convincing as the technical arguments above, we are academics and this whole project has been approved by our institutions.</p>
 
 
       <h4>How do I know this is not a <a href="https://en.wikipedia.org/wiki/Ponzi_scheme">Ponzi scheme</a>?</h4>
