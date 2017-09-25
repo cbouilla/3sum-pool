@@ -11,7 +11,7 @@
       fstype: ext4
       dev: /dev/xvdb
 
-  - name: ensure mountpoint has correct permissions
+  - name: mountpoint has correct permissions
     become: true
     file:
       path: /mnt/large
@@ -27,7 +27,7 @@
       state: mounted
 
 # debian packages  
-  - name: ensure required debian packages are present
+  - name: required debian packages are present
     apt: pkg={{ item }} state=present
     become: true
     with_items:
@@ -37,21 +37,21 @@
       - python3-twisted
 
 # python packages
-  - name: python v3.x packages (PIP)
+  - name: python v3.x packages (PIP) are present
     become: true
     pip:
       requirements: /home/admin/my_stratum/ansible/requirements.txt
       executable: pip3
 
 # sources
-  - name: checkout custom stratum server
+  - name: custom stratum server at latest version
     git: repo=https://github.com/cbouilla/3sum-pool.git
          dest=/home/admin/my_stratum
     notify:
       - restart stratum server
   
 # systemd config
-  - name: copy service file
+  - name: systemd service file is present
     become: true
     copy: 
       src: stratum.service 
