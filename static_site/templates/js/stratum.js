@@ -15,6 +15,6 @@ function jsonNavbarCallback(json){
 }
 
 $.ajax({
-  url: "http://localhost:8080/navbar",
+  url: "http://{{ webservice }}:8080/navbar",
   dataType: "jsonp"
 });

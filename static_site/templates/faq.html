@@ -51,10 +51,10 @@ Here is a partial 3SUM on 96-bits:
       <p>To the best of our knowledge, not much. In particular, it is quite unlikely that it could ever be used to perform any kind of cyber-criminal act.</p>
 
 
-<h3><u>Technical aspects</u></h3>
+<h3><u>Technical Aspects</u></h3>
 
       <h4>How difficult is it?</h4>
-      <p>Finding an <var>n</var>-bit partial collision by brute force requires a computationnal effort of about to 2<sup><var>n/2</var></sup> hashes. The above collision with <var>n = 96</var> required about 500 terahash in total. This was done using up to 1000 CPU cores at the university of Lille-1, and it took days.</p>
+      <p>Finding an <var>n</var>-bit partial collision by brute force requires a computationnal effort of about 2<sup><var>n</var>/2</sup> hashes. The above collision with <var>n</var> = 96 required about 500 terahash in total. This was done using up to 1000 CPU cores at the university of Lille-1, and it took days.</p>
       <p>Finding a 128-bit partial collision is 65'536 times harder, and it will require about 100 exa-hashes in total (yes, this is 100'000'000'000'000'000'000). Note that, at the time of this writing, the global hashrate of all combined miners on earth is about 6 exa-hash/s, so our little experiment would only require 17s of their combined mining power.</p>
 
 
@@ -67,10 +67,10 @@ Here is a partial 3SUM on 96-bits:
       <h4 id="plan">How do you plan to find the partial 3SUM?</h4>
       <p>Basically, our plan works in two steps:
       <ol>
-      <li>Build 3 lists L<sub>A</sub>, L<sub>B</sub> and L<sub>C</sub>, each containing between 4 and 8 billions 512-bit blocks whose hash start with (at least) 32 zero bits.
-      <li>For each block A in L<sub>A</sub> and each block B in L<sub>B</sub>, check if <code>SHA-256(A) xor SHA-256(B)</code> (partially) matches the hash of a block in L<sub>C</sub>.
+      <li>Build 3 lists <var>A</var>, <var>B</var> and <var>C</var> each containing between 4 and 8 billions 512-bit blocks whose hash start with (at least) 32 zero bits.
+      <li>Run a 3SUM-finding algorithm on <var>A, B, C</var>.
       </ol>
-      </p>
+      The simplest algorithm for step 2 consists in processing each pair <var>(a, b)</var> in <var>A x B</var>, checking if <code>SHA-256(A) xor SHA-256(B)</code> (partially) matches the hash of a block in <var>C</var>.</p>
 
 
       <h4>Aren't there more sophisticated algorithms to compute a 3SUM?</h4>
@@ -79,7 +79,7 @@ Here is a partial 3SUM on 96-bits:
 
 
 
-<h3><u>Mining the pool</u></h3>
+<h3><u>Mining the Pool</u></h3>
       <h4>What role do bitcoin miners play in your plan?</h4>
       <p>Bitcoin miners are capable of carrying out the first step (<a href="#plan">see above</a>) much faster than classical computers.</p>
       <p>A single core of a modern CPU can perform approximately 5 mega-hash/s (first step), but is capable of testing about 300 millions of pairs per second (second step). So, the bottleneck is actually the first step: precisely what bitcoin miners are designed to do!</p>
@@ -110,12 +110,21 @@ Here is a partial 3SUM on 96-bits:
 
 
       <h4>How many shares do you need?</h4>
-      <p>We need roughly <code>12'000'000'000 / cuberoot(D)</code>, where <var>D</var> is the <i>pool difficulty</i>.
+      <p>We need roughly <code>12'000'000'000</code> shares at difficulty one and (see below) slighlty less at a higher difficulty.
 
 
       <h4 id="difficulty">What is the difficulty of this pool?</h4>
-      <p>The total computational effort required to find this many shares is equivalent to that of findind <code>12'000'000'000 * D / cuberoot(D)</code> difficulty-1 shares. This quantity is minimal at difficulty one.</p>
-      <p>Concretely, the difficulty will be low, between 1 and 16, we don't know yet. We may end up creating several pools with distinct difficulties (some miners produce shares <em>faster</em> at difficulty 16 than at difficulty 1...).</p>
+      <p>There is no fixed difficulty. The pool server tries to adjust the difficulty so that each miner sends shares as fast as possible.</p>
+
+
+      <h4>Why not just set the difficulty to 1?</h4>
+      <p>As stated above, our goal is to get 12 billion shares as fast as possible. Shares are produced faster at low difficulty, so why not set the difficulty to one?</p>
+      <p>One problem is that the <i>controller</i> of your mining rig (probably a low-cost ARM device such as a Raspberry Pi or a BeagleBoard) is not capable of reporting shares very frequently (in normal bitcoin mining, reporting shares is infrequent, so it doesn't matter). Our experience with some devices suggest that they are incapable of reporting more than 60 shares/s.</p>
+      <p>For this reason, we adjust the difficulty to maximize computational efficiency.</p>
+
+
+      <h4>How is the difficulty determined for my miner?</h4>
+      <p>Basically, the process works in two steps. First, the pool server estimates the maximum hashrate of your miner by sending you a few high-difficulty jobs (D=1024). Then, it will find the optimal difficulty by sending you jobs of increasing difficulty and measuring the rate at which shares are produced. The chosen difficulty is the lowest that gets 95% close to your optimal hashrate.</p>
 
 
       <h4>What work does this pool send to the miners?</h4>
@@ -138,12 +147,8 @@ Here is a partial 3SUM on 96-bits:
 
 
       <h4>I have a shiny new / superfast miner, can I still contribute?</h4>
-      <p>Yes, definitely! However, it is unlikely that we will be able to use its full potential. If you have a brand new 10 tera-hash / s mining rig, you'd produce about 2300 shares per second (in theory). However, it is unlikely that the <i>controller</i> of your mining rig (probably a low-cost ARM device such as a Raspberry Pi or a BeagleBoard) is capable of coping with such a high rate of shares (in normal bitcoin mining, reporting shares is infrequent, so it doesn't matter). Our experience with some devices suggest that they are incapable of reporting more than 60 shares/s.</p>
-      <p>One option would be to increase the difficulty, but it's not very satisfactory (<a href="#difficulty">see above</a>).
+      <p>Yes, definitely! The pool server will send you jobs of a higher difficulty, and you'll produce higher-quality shares.</p>
 
-
-      <!-- <h4>Why does the pool says that my miner operates well under its nominal hashrate?</h4>
-      <p>Try moving to a higher-difficulty pool. You may be hitting the problem mentionned above.</p> -->
 
 <h3><u>Honesty</u></h3>
 

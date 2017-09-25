@@ -24,12 +24,12 @@
 
 <p>To be valid, a block must start with an 80-byte <em>block header</em> containing the following fields:
 <ul>
-<li>[32 bits]  Block version, currently <samp>0x0000004</samp>.</li>
+<li>[ 32 bits] Block version, currently <samp>0x0000004</samp>.</li>
 <li>[256 bits] Hash of the previous block header.</li>
 <li>[256 bits] Hash of the transactions included in this block.</li>
-<li>[32 bits]  Current timestamp (seconds since the Unix epoch).</li>
-<li>[32 bits]  Encoded network difficulty of the proof-of-work this block header conforms to.</li>
-<li>[32 bits]  Arbitrary number ("<em>nonce</em>").</li>
+<li>[ 32 bits] Current timestamp (seconds since the Unix epoch).</li>
+<li>[ 32 bits] Encoded network difficulty of the proof-of-work this block header conforms to.</li>
+<li>[ 32 bits] Arbitrary number ("<em>nonce</em>").</li>
 </ul></p>
 
 <p>To be valid, a block header must satisfy an additional condition: its own hash must begin with a specified number of zero bits. This is the "proof-of-work". The number of expected zero bits is given by the <em>network difficulty</em>. The higher it is, the more difficult it is to find a valid block header, and thus to extend the blockchain. The network difficulty is continuously adjusted so that a new block is found every 10 minutes.</p> 
