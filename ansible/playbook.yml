@@ -3,39 +3,75 @@
   remote_user: admin
   tasks:
 
+# EC2 extra volume
+  - name: extra volume has a filesystem
+    become: true
+    filesystem:
+      force: no
+      fstype: ext4
+      dev: /dev/xvdb
+
+  - name: extra volume is mounted
+    become: true
+    mount:
+      name: /mnt/large
+      src: /dev/xvdb
+      fstype: ext4
+      state: mounted
+
 # debian packages  
   - name: ensure required debian packages are present
     apt: pkg={{ item }} state=present
-    sudo: yes
+    become: true
     with_items:
       - emacs24-nox
       - debian-goodies
       - git
-      - python3-twisted # required to install the rest
+      - python3-twisted
+
+# python packages
+  - name: python v3.x packages (PIP)
+    become: true
+    pip:
+      requirements: /home/admin/my_stratum/ansible/requirements.txt
+      executable: pip3
 
 # sources
   - name: checkout custom stratum server
     git: repo=https://github.com/cbouilla/3sum-pool.git
          dest=/home/admin/my_stratum
-
-# python packages
-  - name: python v3.x packages (PIP)
-    sudo: yes
-    pip:
-      requirements: /home/admin/my_stratum/ansible/requirements.txt
-      executable: pip3
-
+    notify:
+      - restart stratum server
   
+# systemd config
   - name: copy service file
-    sudo: yes
+    become: true
     copy: 
       src: stratum.service 
       dest: /etc/systemd/system/
+    notify:
+      - reload systemd
+      - restart stratum server
 
   - name: stratum server is running
-    sudo: yes
+    become: true
     systemd:
       name: stratum
       daemon_reload: yes
       state: started
       enabled: yes
+
+
+  handlers:
+  - name: restart stratum server
+    become: true
+    systemd:
+      name: stratum
+      state: restarted
+
+  - name: reload systemd
+    become: true
+    systemd:
+      daemon_reload: yes
+
+  

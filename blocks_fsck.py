@@ -121,7 +121,7 @@ def humanize_number(n):
     if n < 1024**2:
         return "{:.1f}K".format(n / 1024)
     if n < 1024**3:
-        return "{:.1f}L".format(n / 1024**2)
+        return "{:.1f}M".format(n / 1024**2)
     if n < 1024**4:
         return "{:.1f}G".format(n / 1024**3)
     return "{:.1f}T".format(n / 1024**4)

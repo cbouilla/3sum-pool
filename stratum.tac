@@ -26,7 +26,7 @@ internet.TimerService(60, cron.minute).setServiceParent(stratumService)
 application = service.Application("3SUM Stratum Server")
 
 # setup logging
-logfile = DailyLogFile("my.log", ".")
+logfile = DailyLogFile("my.log", "/mnt/large")
 application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
 
 # Connect our MultiService to the application, just like a normal service.

@@ -18,8 +18,8 @@ from twisted.protocols import basic
 from twisted.logger import Logger
 from twisted.web.resource import Resource, NoResource
 
-BLOCK_FILE = "blocks.bin"
-STATS_FILE = "stats.bin"
+BLOCK_FILE = "/mnt/large/blocks.bin"
+STATS_FILE = "/mnt/large/stats.bin"
 JOB_TYPES = ['FOO', 'BAR', 'FOOBAR']
 HASHRATE_ESTIMATION_DIFFICULTY = 1024
 HASHRATE_ESTIMATION_MINIMUM = 4
