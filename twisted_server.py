@@ -20,7 +20,7 @@ from twisted.web.resource import Resource, NoResource
 BLOCK_FILE = "/mnt/large/blocks.bin"
 STATS_FILE = "/mnt/large/stats.bin"
 JOB_TYPES = ['FOO', 'BAR', 'FOOBAR']
-HASHRATE_ESTIMATION_DIFFICULTY = 1024
+HASHRATE_ESTIMATION_DIFFICULTY = 8192
 HASHRATE_ESTIMATION_MINIMUM = 4
 
 class WorkFactory:
@@ -193,7 +193,7 @@ class Worker:
                     hashrate_estimation_continuation()
                 else:
                     # restart with lower difficulty
-                    self.rate_estimation_start(max(1, difficulty//16), hashrate_estimation_callback)
+                    self.rate_estimation_start(max(1, difficulty//16), hashrate_estimation_callback, timeout=120)
             else:
                 self.maximum_hashrate = rate * difficulty * (1 << 32)
                 hashrate_estimation_continuation()                
@@ -467,7 +467,7 @@ class WorkerStats(Resource):
             else:
                 d['D'] = '???'
             if worker.rate:
-                d['rate'] = worker.rate.one_minute_rate
+                d['rate'] = "{:.1f}".format(worker.rate.one_minute_rate)
             else:
                 d['rate'] = 'offline'
             L.append(d)
