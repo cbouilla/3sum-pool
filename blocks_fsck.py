@@ -115,10 +115,20 @@ class Share:
         nonce = "{:08x}".format(nonce_bin)
         return Share(work_factory, extranonce2, nonce)
 
+def humanize_number(n):
+    if n < 1024:
+        return str(n)
+    if n < 1024**2:
+        return "{:.1f}K".format(n / 1024)
+    if n < 1024**3:
+        return "{:.1f}L".format(n / 1024**2)
+    if n < 1024**4:
+        return "{:.1f}G".format(n / 1024**3)
+    return "{:.1f}T".format(n / 1024**4)
 
 N = [0, 0, 0]
 i = 0
-print("block file is {} bytes".format(os.path.getsize(BLOCK_FILE)))
+print("block file is {} byte".format(humanize_number(os.path.getsize(BLOCK_FILE))))
 print("Expecting {} complete blocks".format(os.path.getsize(BLOCK_FILE) // 16))
 with open(BLOCK_FILE, 'rb') as f:
     while True:
