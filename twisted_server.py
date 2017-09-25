@@ -10,7 +10,6 @@ from binascii import hexlify, unhexlify
 import os.path
 import random
 
-#import metrology
 from metrology import Metrology
 
 from twisted.internet import reactor, protocol, endpoints
@@ -25,7 +24,8 @@ HASHRATE_ESTIMATION_DIFFICULTY = 1024
 HASHRATE_ESTIMATION_MINIMUM = 4
 
 class WorkFactory:
-   ######################""" work parameters
+    """generate correct work notifications for the pool"""
+    ####################
     extraNonce2_size = 4
     coinbase_1 = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff20020862062f503253482f04b8864e5008"
     coinbase_2 = "072f736c7573682f000000000100f2052a010000001976a914d23fcdf86f7e756a64a7a9688ef9903327048ed988ac00000000"
@@ -37,7 +37,6 @@ class WorkFactory:
         self.job_id = 0
         self.difficulty = 1
         self.extranonce1 = extranonce1
-
         # non-constant work parameters
         if version == 'FOO':
             self.block_version = hexlify(b'-OOF').decode()
@@ -54,7 +53,6 @@ class WorkFactory:
             self.prev_block_hash = hexlify(Share.swap_endian_words(hexlify(b'AR-This is a rndm 32-byte string'))).decode()    
             self.job_kind = "foobar"
             self.job_code = 2
-
 
     def get_jobid(self):
         self.job_id += 1
@@ -169,7 +167,7 @@ class Worker:
         else:
             self.estimate_hashrate()   
 
-    def rate_estimation_start(self, difficulty, callback, timeout=80):
+    def rate_estimation_start(self, difficulty, callback, timeout=40):
         """Set the difficulty to `difficulty`, send work and wait for `timeout` seconds. 
            Then fire `callback(difficulty, rate)`. If the rate could not be computed, it is set to None.
         """
@@ -369,7 +367,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
             self.log.warn("invalid share submitted from {log_source} [{share}]", share=share)
             return False
         
-        self.log.info("valid share submitted from {log_source} [{share}]", share=share)
+        # self.log.info("valid share submitted from {log_source} [{share}]", share=share)
         self.factory.save_share(share)
         self.worker.share_submitted()
         return True
@@ -537,11 +535,3 @@ class StratumCron:
 
         for conn in self.factory.active_connections:
             conn.ping()
-
-#
-# N_k blocs avec k bits à zéro (k >= 32)
-#
-# [2**(32/3) * N_32] ** 3 == 2**n 
-# [2**(36/3) * N_36] ** 3 == 2**n 
-#
-# sum_k 2**(k/3) * N_k == 2**n
