@@ -3,7 +3,10 @@ from twisted.web import server
 from twisted.python.log import ILogObserver, FileLogObserver
 from twisted.python.logfile import DailyLogFile
 
-from twisted_server import StratumFactory, StratumSite, StratumCron
+from protocol import StratumFactory
+from http_interface import StratumSite
+from persistence import LOG_DIR
+#StratumCron
 
 port = 3333
 
@@ -19,14 +22,14 @@ website = server.Site(StratumSite(pool))
 internet.TCPServer(8080, website).setServiceParent(stratumService)
 
 # hook up periodic actions
-cron = StratumCron(pool)
-internet.TimerService(60, cron.minute).setServiceParent(stratumService)
+#cron = StratumCron(pool)
+#internet.TimerService(60, cron.minute).setServiceParent(stratumService)
 
 # Create an application as normal
 application = service.Application("3SUM Stratum Server")
 
 # setup logging
-logfile = DailyLogFile("my.log", "/mnt/large")
+logfile = DailyLogFile("my.log", LOG_DIR)
 application.setComponent(ILogObserver, FileLogObserver(logfile).emit)
 
 # Connect our MultiService to the application, just like a normal service.
