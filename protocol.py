@@ -129,10 +129,10 @@ class StratumProtocol(basic.LineOnlyReceiver):
 
     def submit(self, worker_name, job_id, extranonce2, ntime, nonce):
         """when the miner sends the "submit" RPC"""
+        share = Share(extranonce2, nonce, job_context=self.job_context)
         if job_id != str(self.job_id):
             self.log.info("stale share {share} from {log_source}", share=share)
             return False
-        share = Share(extranonce2, nonce, job_context=self.job_context)
         valid = share.valid()
         if not valid:
             self.log.warn("invalid share {share} from {log_source}", share=share)
