@@ -46,11 +46,11 @@ class WorkerStats(Resource):
             d['diff1_shares'] = worker.persistent.diff1_shares
             d['state'] = worker.state
             if worker.persistent.maximum_hashrate:
-                d['maximum_hashrate'] = worker.maximum_hashrate
+                d['maximum_hashrate'] = worker.persistent.maximum_hashrate
             else:
                 d['maximum_hashrate'] = 0
             if worker.persistent.optimal_difficulty:
-                d['D'] = worker.optimal_difficulty
+                d['D'] = worker.persistent.optimal_difficulty
             else:
                 d['D'] = '???'
             if worker.rate:
