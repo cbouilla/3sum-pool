@@ -37,7 +37,7 @@ class WorkerStats(Resource):
         '''hack using JSONP'''
         request.responseHeaders.addRawHeader(b"content-type", b"application/json")
         L = []
-        for proto in self.factory.active_connections.items():
+        for proto in self.factory.active_connections:
             worker = proto.worker 
             d = {}
             d['name'] = name
