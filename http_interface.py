@@ -40,7 +40,7 @@ class WorkerStats(Resource):
         for proto in self.factory.active_connections:
             worker = proto.worker 
             d = {}
-            d['name'] = name
+            d['name'] = worker.name
             d['kind'] = worker.kind
             d['total_shares'] = worker.persistent.total_shares
             d['diff1_shares'] = worker.persistent.diff1_shares
