@@ -6,6 +6,7 @@ from twisted.protocols import basic
 from twisted.logger import Logger
 from twisted.web.resource import Resource, NoResource
 
+from persistence import ShareDB
 
 class NavBarStats(Resource):
     """the HTTP server that responds to JSON requests from clients for the navbar"""
@@ -36,7 +37,8 @@ class WorkerStats(Resource):
         '''hack using JSONP'''
         request.responseHeaders.addRawHeader(b"content-type", b"application/json")
         L = []
-        for name, worker in self.factory.workers.items():
+        for proto in self.factory.active_connections.items():
+            worker = proto.worker 
             d = {}
             d['name'] = name
             d['kind'] = worker.kind
