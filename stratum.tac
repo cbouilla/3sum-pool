@@ -8,8 +8,6 @@ from protocol import StratumFactory
 from http_interface import StratumSite
 from persistence import LOG_DIR
 
-#TODO : StratumCron
-
 port = 3333
 
 # Create a MultiService
@@ -24,10 +22,10 @@ website = server.Site(StratumSite(pool))
 internet.TCPServer(8080, website).setServiceParent(stratumService)
 
 # hook up periodic actions
-#cron = StratumCron(pool)
-
-# ping workers
+## ping workers
 internet.TimerService(30, pool.ping).setServiceParent(stratumService)
+
+## TODO : flush share db
 
 # Create an application as normal
 application = service.Application("3SUM Stratum Server")
