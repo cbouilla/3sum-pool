@@ -7,8 +7,8 @@ from persistence import WorkerDB
 
 HASHRATE_ESTIMATION_DIFFICULTY = 8192
 HASHRATE_ESTIMATION_MINIMUM = 4
-HASHRATE_ESTIMATION_TIMEOUT = 10
-DIFFICULTY_ESTIMATION_TIMEOUT = 10
+HASHRATE_ESTIMATION_TIMEOUT = 120
+DIFFICULTY_ESTIMATION_TIMEOUT = 80
 
 class Worker:
     """High-level view of a worker. Protocol-level details are not dealt with."""

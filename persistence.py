@@ -8,13 +8,13 @@ from metrology import Metrology
 
 from singleton import Singleton
 
-#WORKER_FILE = "/mnt/large/stats.bin"
-#BLOCK_FILE = "/mnt/large/blocks.bin"
-#LOG_DIR = "/mnt/large"
+WORKER_FILE = "/mnt/large/stats.bin"
+BLOCK_FILE = "/mnt/large/blocks.bin"
+LOG_DIR = "/mnt/large"
 
-WORKER_FILE = "stats.bin"
-BLOCK_FILE = "blocks.bin"
-LOG_DIR = "."
+#WORKER_FILE = "stats.bin"
+#BLOCK_FILE = "blocks.bin"
+#LOG_DIR = "."
 
 class ShareDB(metaclass=Singleton):
     """store mined shares in a binary file"""

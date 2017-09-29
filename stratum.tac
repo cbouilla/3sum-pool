@@ -30,7 +30,7 @@ internet.TimerService(30, pool.ping).setServiceParent(stratumService)
 # Create an application as normal
 application = service.Application("3SUM Stratum Server")
 
-# setup logging
+# setup logging. TODO : separate access.log vs stratum.log
 logfile = DailyLogFile("my.log", LOG_DIR)
 loglevel = LogLevel.levelWithName('info')
 predicate = LogLevelFilterPredicate()
