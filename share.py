@@ -86,7 +86,7 @@ class Share:
 
         block_version, prev_block_hash = version_prev_block(self.kind)
         coinbase = self.coinbase_1 + self.extranonce1 + self.extranonce2 + self.coinbase_2
-        print("coinbase : {}".format(coinbase))
+        #print("coinbase : {}".format(coinbase))
         coinbase_hash_bin = sha256d(unhexlify(coinbase))
         merkle_root = hexlify(coinbase_hash_bin)
         version_bin = struct.pack("<I", int(block_version, base=16))
@@ -98,13 +98,16 @@ class Share:
         return version_bin + prev_hash_bin + mrt_bin + time_bin + diff_bin + nonce_bin
 
     def __str__(self):
-        return "({} / {} / {} / {} / {})".format(self.kind, self.D, self.extranonce1, self.extranonce2, self.nonce)
+        return "({} / D={} / {} / {} / {})".format(JOB_TYPES[self.kind], self.D, self.extranonce1, self.extranonce2, self.nonce)
 
     def block_hash(self):
         return sha256d(self.block())
 
     def valid(self):
+        #print(hexlify(self.block()).decode())
+        #print(self.formated_hex_block())
         block_hash = self.block_hash()
+        #print(hexlify(block_hash).decode())
         return block_hash[28:] == bytes([0,0,0,0])
 
     def formated_hex_block(self):

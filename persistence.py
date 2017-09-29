@@ -75,7 +75,7 @@ class PersistentWorkerState:
 
 class WorkerDB(metaclass=Singleton):
     workers = {}
-    logger = Logger("DB")
+    logger = Logger()
 
     def __init__(self):
         try:

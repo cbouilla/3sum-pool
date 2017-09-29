@@ -17,7 +17,7 @@ class Worker:
     protocol = None
     persistent = None
     rate = None
-    log = Logger(namespace="Worker")
+    log = Logger()
 
     def __init__(self, protocol, name, kind):
         self.name = name
@@ -26,6 +26,9 @@ class Worker:
         self.persistent = WorkerDB().get(name, kind)
         self.rate = None
         reactor.callLater(0.5, self._get_to_work)
+
+    def __str__(self):
+        return "{}/{} @ {}".format(self.name, self.kind, self.protocol.peer)
 
     def submit(self):
         """invoked by the protocol when a share is submitted"""

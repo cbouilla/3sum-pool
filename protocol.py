@@ -31,13 +31,13 @@ class StratumProtocol(basic.LineOnlyReceiver):
     job_id = 1
     rpc_id = 1
     peer = None
+    log = Logger()
 
     # for LineOnlyReceiver
     delimiter = b'\n'
 
     def __init__(self, factory):
         self.factory = factory
-        self.log = Logger()
 
     def __str__(self):
         try:
@@ -62,7 +62,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
 
 
     def lineReceived(self, line):
-        self.log.debug("received from {log_source}: {line}", line=line)
+        self.log.debug("{log_source} <--- {line}", line=line)
         try:
             rpc = json.loads(line.strip().decode())
         except:
@@ -70,7 +70,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
             return
 
         if 'method' not in rpc:
-            self.log.debug("got response ({line})", line=line)
+            #self.log.debug("got response ({line})", line=line)
             return
 
         if 'params' not in rpc:
@@ -93,7 +93,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
 
         response = {'id': rpc['id'], 'result': output, 'error': None}
         encoded = json.dumps(response).encode() + b'\n'
-        self.log.debug('sending to {log_source}: {encoded}', encoded=encoded)
+        self.log.debug('{log_source} ---> {encoded}', encoded=encoded)
         self.transport.write(encoded)
 
 
@@ -121,7 +121,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
         self.job_id += 1
         self.job_context = JobContext(self.extranonce1, self.difficulty)
         params = [str(self.job_id)] + self.job_context.work_parameters() + [cancel_older_jobs]
-        self.log.debug("notify {peer} --- {params}", peer=self.peer, params=params)
+        self.log.debug("notify {log_source} --- {params}", peer=self.peer, params=params)
         message = {'method': 'mining.notify', 'params': params, 'error': None}
         encoded = json.dumps(message).encode() + b'\n'
         self.transport.write(encoded)
@@ -132,17 +132,17 @@ class StratumProtocol(basic.LineOnlyReceiver):
         share = Share(extranonce2, nonce, job_context=self.job_context)
         valid = share.valid()
         if not valid:
-            self.log.warn("invalid share submitted from {peer} [{share}]", peer=self.peer, share=share)
+            self.log.warn("invalid share {share} from {log_source}", share=share)
             return False
-        self.log.debug("valid share submitted from {peer} [{share}]", peer=self.peer, share=share)
+        self.log.debug("valid share {share} from {log_source} ", share=share)
         ShareDB().save(share)
-        self.worker.share_submitted()
+        self.worker.submit()
         return True
 
 
     def ping(self):
         """Send the "client.get_version" RPC... and ignore the result."""
-        self.log.debug("sending ping to {peer}", peer=self.peer)
+        self.log.debug("ping {log_source}")
         self.rpc_id += 1
         message = {'id': self.rpc_id, 'method': 'client.get_version', 'params': None, 'error': None}
         encoded = json.dumps(message).encode() + b'\n'
@@ -152,7 +152,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
     def set_difficulty(self, difficulty=1):
         """Send the "set_difficulty" RPC to the miner. Save it into self."""
         self.difficulty = difficulty
-        self.log.debug("set_difficulty {peer}, new_difficulty={difficulty}", peer=self.peer, difficulty=difficulty)
+        self.log.debug("set_difficulty {difficulty} to {log_source}", difficulty=difficulty)
         message = {'method': 'mining.set_difficulty', 'params': [difficulty], 'error': None}
         encoded = json.dumps(message).encode() + b'\n'
         self.transport.write(encoded)
@@ -162,13 +162,18 @@ class StratumProtocol(basic.LineOnlyReceiver):
 class StratumFactory(protocol.Factory):
     """Hold the global state of the Stratum server"""
     log = Logger(namespace="Stratum")
-    workers = {}
+    active_connections = {}
 
     def __init__(self):
-        # miners we must send work to
         self.miner_count = 0
         self.share_per_s = Metrology.meter('shares')
         self.active_connections = set()
 
     def buildProtocol(self, addr):
         return StratumProtocol(self)
+
+    def ping(self):
+        """send a ping to all connected workers. This mostly helps cpuminer"""
+        self.log.debug("cron : ping")
+        for proto in self.active_connections:
+            proto.ping()
