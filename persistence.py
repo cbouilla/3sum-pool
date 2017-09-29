@@ -23,7 +23,10 @@ class ShareDB(metaclass=Singleton):
     rate = None
 
     def __init__(self):
-        self.n = os.path.getsize(BLOCK_FILE) // 16
+        try:
+            self.n = os.path.getsize(BLOCK_FILE) // 16
+        except FileNotFoundError:
+            self.n = 0
         self.block_file = open(BLOCK_FILE, 'ab')
         self.rate = Metrology.meter('shares')
 
