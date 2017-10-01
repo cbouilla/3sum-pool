@@ -34,7 +34,10 @@
       - emacs24-nox
       - debian-goodies
       - git
-      - python3-twisted
+
+  - name: unwanted debian packages are absent
+    apt: pkg=python3-twisted state=absent
+    become: true
 
 # python packages
   - name: python v3.x packages (PIP) are present

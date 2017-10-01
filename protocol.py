@@ -117,7 +117,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
 
 
     def notify(self, cancel_older_jobs=True):
-        """Send the "notify" RPC to initiate new work. Initialize a JobContext"""
+        """Send the "notify" RPC to initiate new work. Initialize a JobContext, which chooses randomly between FOO, BAR and FOOBAR"""
         self.job_id += 1
         self.job_context = JobContext(self.extranonce1, self.difficulty)
         params = [str(self.job_id)] + self.job_context.work_parameters() + [cancel_older_jobs]
@@ -176,7 +176,15 @@ class StratumFactory(protocol.Factory):
         return StratumProtocol(self)
 
     def ping(self):
-        """send a ping to all connected workers. This mostly helps cpuminer"""
+        """send a ping to all connected workers. This mostly helps cpuminer to not drop the connection."""
         self.log.debug("cron : ping")
         for proto in self.active_connections:
             proto.ping()
+
+    def rotate_job(self):
+        """send a notify() to all connected workers. 
+           This randomly change between FOO, BAR and FOOBAR and maintain balance between the three.
+        """
+        self.log.debug("cron : job_rotate")
+        for proto in self.active_connections:
+            proto.notify()

@@ -8,13 +8,13 @@ from metrology import Metrology
 
 from singleton import Singleton
 
-WORKER_FILE = "/mnt/large/stats.bin"
-BLOCK_FILE = "/mnt/large/blocks.bin"
-LOG_DIR = "/mnt/large"
+WORKDIR = '/mnt/large/'
+#WORKDIR = ''
 
-#WORKER_FILE = "stats.bin"
-#BLOCK_FILE = "blocks.bin"
-#LOG_DIR = "."
+WORKER_FILE = WORKDIR + "stats.bin"
+BLOCK_FILE = WORKDIR + "blocks.bin"
+STRATUM_LOG = WORKDIR + 'stratum.log'
+ACCESS_LOG = WORKDIR + 'access.log'
 
 class ShareDB(metaclass=Singleton):
     """store mined shares in a binary file"""
@@ -32,7 +32,6 @@ class ShareDB(metaclass=Singleton):
 
     def flush(self):
         self.block_file.flush()
-        os.fsync()
 
     def save(self, share):
         self.block_file.write(share.serialize())
@@ -108,3 +107,8 @@ class WorkerDB(metaclass=Singleton):
                 pickle.dump(self.workers, f)
         except Exception as e:
             self.logger.error('impossible to save worker db : {}'.format(e))
+
+
+def db_cron_hourly():
+    ShareDB().flush()
+    WorkerDB().flush()
