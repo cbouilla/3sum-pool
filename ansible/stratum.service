@@ -4,7 +4,7 @@ Description=Stratum pool server
 [Service]
 Environment="PYTHONPATH=."
 
-ExecStart=/usr/bin/twistd \
+ExecStart=/usr/local/bin/twistd \
     --nodaemon \
     --pidfile= \
     --python=stratum.tac

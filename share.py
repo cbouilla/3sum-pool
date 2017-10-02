@@ -3,8 +3,6 @@ import random
 from hashlib import sha256
 from binascii import hexlify, unhexlify
 
-from singleton import Singleton
-
 JOB_TYPES = ['FOO', 'BAR', 'FOOBAR']
 
 

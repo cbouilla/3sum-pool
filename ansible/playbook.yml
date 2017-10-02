@@ -39,13 +39,6 @@
     apt: pkg=python3-twisted state=absent
     become: true
 
-# python packages
-  - name: python v3.x packages (PIP) are present
-    become: true
-    pip:
-      requirements: /home/admin/my_stratum/ansible/requirements.txt
-      executable: pip3
-
 # sources
   - name: custom stratum server at latest version
     git: repo=https://github.com/cbouilla/3sum-pool.git
@@ -53,6 +46,15 @@
     notify:
       - restart stratum server
   
+# python packages
+  - name: python v3.x packages (PIP) are present
+    become: true
+    pip:
+      requirements: /home/admin/my_stratum/ansible/requirements.txt
+      executable: pip3
+    notify:
+      - restart stratum server
+
 # systemd config
   - name: systemd service file is present
     become: true
@@ -83,5 +85,4 @@
     become: true
     systemd:
       daemon_reload: yes
-
   
