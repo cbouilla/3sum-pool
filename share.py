@@ -1,3 +1,4 @@
+import time
 import struct
 import random
 from hashlib import sha256
@@ -42,7 +43,8 @@ class JobContext:
 
     def work_parameters(self):
         block_version, prev_block_hash = version_prev_block(self.kind)
-        return [prev_block_hash, Share.coinbase_1, Share.coinbase_2, [], block_version, Share.ndiff, Share.ntime]
+        ntime = "{:08x}".format(int(time.time()))
+        return [prev_block_hash, Share.coinbase_1, Share.coinbase_2, [], block_version, Share.ndiff, ntime]
 
 
 class Share:
@@ -52,6 +54,7 @@ class Share:
     extranonce1 = None
     extranonce2 = None
     nonce = None
+    ntime = None              # network time
 
     # metadata
     D = None                  # actual difficulty of the share
@@ -59,17 +62,19 @@ class Share:
 
     # static values. These choices yields invalid bitcoin blocks.
     # This means that we don't actually mine bitcoins.
-    ndiff = "efbeadde"   # network time
-    ntime = "adaaaaba"   # encoded network difficulty
+    ndiff = "efbeadde"   # encoded network difficulty
+    
 
     extraNonce2_size = 4
     coinbase_1 = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff20020862062f503253482f04b8864e5008"
     coinbase_2 = "072f736c7573682f000000000100f2052a010000001976a914d23fcdf86f7e756a64a7a9688ef9903327048ed988ac00000000"
     
   
-    def __init__(self, extranonce2, nonce, job_context=None, kind=None, D=None, extranonce1=None):
+    def __init__(self, extranonce2, nonce, ntime, job_context=None, kind=None, D=None, extranonce1=None):
         self.extranonce2 = extranonce2
         self.nonce = nonce
+        self.ntime = ntime
+        self._hash = None
         if job_context:
             self.extranonce1 = job_context.extranonce1
             self.kind = job_context.kind
@@ -84,7 +89,6 @@ class Share:
 
         block_version, prev_block_hash = version_prev_block(self.kind)
         coinbase = self.coinbase_1 + self.extranonce1 + self.extranonce2 + self.coinbase_2
-        #print("coinbase : {}".format(coinbase))
         coinbase_hash_bin = sha256d(unhexlify(coinbase))
         merkle_root = hexlify(coinbase_hash_bin)
         version_bin = struct.pack("<I", int(block_version, base=16))
@@ -99,7 +103,10 @@ class Share:
         return "({} / D={} / {} / {} / {})".format(JOB_TYPES[self.kind], self.D, self.extranonce1, self.extranonce2, self.nonce)
 
     def block_hash(self):
-        return sha256d(self.block())
+        if not self._hash:
+            self._hash = sha256d(self.block())
+        return self._hash
+        
 
     def valid(self):
         #print(hexlify(self.block()).decode())
@@ -113,15 +120,17 @@ class Share:
         return "{} {} {} {} {} {}".format(h[0:8], h[8:72], h[72:136], h[136:144], h[144:152], h[152:160])
 
     def serialize(self):
-        """dump this share into 128 bits"""
-        return struct.pack('<HHIII', self.kind, self.D, int(self.extranonce2, base=16), int(self.extranonce1, base=16), int(self.nonce, base=16))
+        """dump this share into 160 bits"""
+        return struct.pack('<HHIIII', self.kind, self.D, int(self.extranonce2, base=16), 
+            int(self.extranonce1, base=16), int(self.nonce, base=16), int(self.ntime, base=16))
 
     @staticmethod
     def unserialize(buf):
         """Generate a Share object given a 128-bit serialized share"""
-        kind, D, extranonce2_bin, extranonce1_bin, nonce_bin = struct.unpack('<HHIII', buf)
+        kind, D, extranonce2_bin, extranonce1_bin, nonce_bin, ntime_bin = struct.unpack('<HHIIII', buf)
         extranonce1 = "{:08x}".format(extranonce1_bin)
         extranonce2 = "{:08x}".format(extranonce2_bin)
         nonce = "{:08x}".format(nonce_bin)
-        return Share(extranonce2, nonce, D=D, kind=kind, extranonce1=extranonce1)
+        ntime = "{:08x}".format(ntime_bin)
+        return Share(extranonce2, nonce, ntime, D=D, kind=kind, extranonce1=extranonce1)
 
