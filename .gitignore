@@ -8,3 +8,6 @@ toto
 /hash.BAR.bin
 /hash.FOO.bin
 /hash.FOOBAR.bin
+/access.log
+/blocks2.bin
+/stratum.log
