@@ -59,6 +59,7 @@ class Worker:
         """
         self.protocol.set_difficulty(difficulty)
         self.protocol.notify()
+        self.rate = None
         reactor.callLater(timeout, self._rate_estimation_end, difficulty, callback, args)
 
     def _rate_estimation_end(self, difficulty, callback, args):
@@ -134,4 +135,5 @@ class Worker:
         self.log.info("going into production ({log_source}) at difficulty {difficulty}", difficulty=self.persistent.optimal_difficulty)
         self.protocol.set_difficulty(self.persistent.optimal_difficulty)
         self.protocol.notify()
+        self.rate = None
 
