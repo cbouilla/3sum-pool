@@ -12,6 +12,7 @@ function jsonWorkerCallback(json) {
     var row = $('<tr>')
         .append($('<td>').text(worker['name']))
         .append($('<td>').text(worker['kind']))
+        .append($('<td>').text(worker['state']))
         .append($('<td>').text(humanize_shares(worker['maximum_hashrate']).concat(" hash/s")))
         .append($('<td>').text(worker['D']))
         .append($('<td>').text(humanize_shares(worker['total_shares'], 0)))
