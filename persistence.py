@@ -90,6 +90,9 @@ class PersistentWorkerState:
         self.optimal_difficulty = d
         WorkerDB().flush()
 
+    def __str__(self):
+        return "[Worker: {} / {}. maxhash={}, opt_D: {}. Shares, tot: {}, eq1: {}]".format(self.name, self.kind, 
+            self.maximum_hashrate, self.optimal_difficulty, self.total_shares, self.diff1_shares)
 
 class WorkerDB(metaclass=Singleton):
     workers = {}
