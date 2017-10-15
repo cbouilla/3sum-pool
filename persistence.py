@@ -8,7 +8,6 @@ from metrology import Metrology
 
 
 WORKDIR = '/mnt/large/'
-WORKDIR = ''
 
 WORKER_FILE = WORKDIR + "stats.bin"
 BLOCK_FILE = WORKDIR + "blocks3.bin"
