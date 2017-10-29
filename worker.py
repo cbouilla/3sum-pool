@@ -67,7 +67,7 @@ class Worker:
             self.protocol.log.info("rate estimation failed for {log_source} at difficulty {difficulty}", difficulty=difficulty)
             rate = None
         else:
-            rate = self.rate.one_minute_rate
+            rate = self.rate.mean_rate
             self.protocol.log.info("Estimated rate of {rate} at difficulty {difficulty} for {log_source}", rate=rate, difficulty=difficulty)
         callback(difficulty, rate, **args)
 

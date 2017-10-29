@@ -10,8 +10,8 @@ from metrology import Metrology
 WORKDIR = '/mnt/large/'
 
 WORKER_FILE = WORKDIR + "stats.bin"
-BLOCK_FILE = WORKDIR + "blocks3.bin"
-STRATUM_LOG = WORKDIR + 'stratum2.log'
+BLOCK_FILE = WORKDIR + "blocks4.bin"
+STRATUM_LOG = WORKDIR + 'stratum3.log'
 ACCESS_LOG = WORKDIR + 'access.log'
 
 
