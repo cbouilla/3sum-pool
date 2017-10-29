@@ -1,9 +1,8 @@
 from twisted.internet import reactor
 from twisted.logger import Logger
 
-from metrology import Metrology
-
 from persistence import WorkerDB
+from rate import RateMeter
 
 HASHRATE_ESTIMATION_DIFFICULTY = 8192
 HASHRATE_ESTIMATION_MINIMUM = 4
@@ -16,7 +15,7 @@ class Worker:
     kind = None
     protocol = None
     persistent = None
-    rate = None
+    rate_est = None
     log = Logger()
 
     def __init__(self, protocol, name, kind):
@@ -24,7 +23,7 @@ class Worker:
         self.kind = kind
         self.protocol = protocol
         self.persistent = WorkerDB().get(name, kind)
-        self.rate = None
+        self.rate = RateMeter()
         reactor.callLater(0.5, self._get_to_work)
 
     def __str__(self):
@@ -32,10 +31,7 @@ class Worker:
 
     def submit(self):
         """invoked by the protocol when a share is submitted"""
-        if not self.rate:
-            self.rate = Metrology.meter('shares')
-        else:
-            self.rate.mark()
+        self.rate.mark()
         self.persistent.submit()
         
 
@@ -59,16 +55,17 @@ class Worker:
         """
         self.protocol.set_difficulty(difficulty)
         self.protocol.notify()
-        self.rate = None
+        self.rate = RateMeter()
         reactor.callLater(timeout, self._rate_estimation_end, difficulty, callback, args)
 
     def _rate_estimation_end(self, difficulty, callback, args):
-        if not self.rate:
+        if self.rate.one_minute_rate() == 0:
             self.protocol.log.info("rate estimation failed for {log_source} at difficulty {difficulty}", difficulty=difficulty)
             rate = None
         else:
-            rate = self.rate.mean_rate
-            self.protocol.log.info("Estimated rate of {rate} at difficulty {difficulty} for {log_source}", rate=rate, difficulty=difficulty)
+            rate = self.rate.one_minute_rate()
+            self.protocol.log.info("Est. rate={rate:.1f}/s at D={difficulty} for {log_source} [{count} in {elapsed}]", 
+                rate=rate, difficulty=difficulty, count=self.rate.count, elapsed=self.rate.elapsed_time())
         callback(difficulty, rate, **args)
 
 
@@ -135,5 +132,5 @@ class Worker:
         self.log.info("going into production ({log_source}) at difficulty {difficulty}", difficulty=self.persistent.optimal_difficulty)
         self.protocol.set_difficulty(self.persistent.optimal_difficulty)
         self.protocol.notify()
-        self.rate = None
+        self.rate = RateMeter()
 

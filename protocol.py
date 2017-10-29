@@ -10,7 +10,6 @@ from binascii import hexlify, unhexlify
 import os.path
 import random
 
-from metrology import Metrology
 from twisted.internet import reactor, protocol, endpoints
 from twisted.protocols import basic
 from twisted.logger import Logger
@@ -18,6 +17,7 @@ from twisted.logger import Logger
 from worker import Worker
 from share import JobContext, Share
 from persistence import ShareDB, WorkerDB
+from rate import RateMeter
 
 class StratumProtocol(basic.LineOnlyReceiver):
     """This object holds the state of the stratum protocol (RPC ID, session_id).
@@ -169,7 +169,7 @@ class StratumFactory(protocol.Factory):
 
     def __init__(self):
         self.miner_count = 0
-        self.share_per_s = Metrology.meter('shares')
+        self.share_per_s = RateMeter()
         self.active_connections = set()
 
     def buildProtocol(self, addr):

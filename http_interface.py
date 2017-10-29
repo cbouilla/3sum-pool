@@ -22,7 +22,7 @@ class NavBarStats(Resource):
         d = {}
         db = ShareDB()
         d['miners'] = self.factory.miner_count
-        d['rate'] = db.rate.one_minute_rate
+        d['rate'] = db.rate.one_minute_rate()
         d['shares'] = db.n
         return b'jsonNavbarCallback(' + json.dumps(d).encode() + b');'
 
@@ -54,7 +54,7 @@ class WorkerStats(Resource):
             else:
                 d['D'] = '???'
             if worker.rate:
-                d['rate'] = "{:.1f}".format(worker.rate.one_minute_rate)
+                d['rate'] = "{:.1f}".format(worker.rate.one_minute_rate())
             else:
                 d['rate'] = 'offline'
             L.append(d)
@@ -100,4 +100,6 @@ class  StratumSite(Resource):
             return  WorkerStats(self.factory)
         elif name == b'share':
             return  ShareDispatch()
+        else:
+            return NoResource()
 

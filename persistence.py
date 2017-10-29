@@ -4,7 +4,7 @@ import os
 
 from twisted.logger import Logger
 
-from metrology import Metrology
+from rate import RateMeter
 
 
 WORKDIR = '/mnt/large/'
@@ -35,7 +35,7 @@ class ShareDB(metaclass=Singleton):
     """store mined shares in a binary file"""
     block_file = None
     n = None
-    rate = None
+    rate = RateMeter()
 
     def __init__(self):
         try:
@@ -43,7 +43,8 @@ class ShareDB(metaclass=Singleton):
         except FileNotFoundError:
             self.n = 0
         self.block_file = open(BLOCK_FILE, 'ab')
-        self.rate = Metrology.meter('shares')
+        self.rate = RateMeter()
+
 
     def flush(self):
         self.block_file.flush()
