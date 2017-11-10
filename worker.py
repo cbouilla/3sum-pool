@@ -64,7 +64,7 @@ class Worker:
             rate = None
         else:
             rate = self.rate.mean_rate()
-            self.protocol.log.info("Est. rate={rate:.1f}/s at D={difficulty} [{hashrate:0.1f}Ghash/s] for {log_source} [{count} in {elapsed}]", 
+            self.protocol.log.info("Est. rate={rate:.1f}/s at D={difficulty} [{hashrate:0.1f}Ghash/s] for {log_source} [{count} in {elapsed:.1}s]", 
                 rate=rate, difficulty=difficulty, count=self.rate.count, elapsed=self.rate.elapsed_time(), hashrate=rate*difficulty*(1<<32)/1e9)
         callback(difficulty, rate, **args)
 
@@ -106,9 +106,9 @@ class Worker:
             if hashrate >= 0.95 * self.persistent.maximum_hashrate and objective <= 0.95 * best_objective:
                 difficulty_continuation(measures)
                 return
-            self.log.info("difficulty search: score={objective} @ D={D} (best={best} ({log_source})", objective=objective, D=difficulty, best=best_objective)
+            self.log.info("difficulty search: score={objective:.1f} @ D={D} (best={best:.1f}) ({log_source})", objective=objective, D=difficulty, best=best_objective)
             best_objective = max(best_objective, objective)
-            self._rate_estimation(difficulty+1, difficulty_callback,
+            self._rate_estimation(difficulty+4, difficulty_callback,
                 args={'best_objective': best_objective, 'measures': measures}, timeout=DIFFICULTY_ESTIMATION_TIMEOUT)
 
         def difficulty_continuation(measures):
