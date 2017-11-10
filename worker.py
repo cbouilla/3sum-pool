@@ -5,7 +5,7 @@ from persistence import WorkerDB
 from rate import RateMeter
 
 HASHRATE_ESTIMATION_DIFFICULTY = 8192
-HASHRATE_ESTIMATION_MINIMUM = 4
+HASHRATE_ESTIMATION_MINIMUM = 3
 HASHRATE_ESTIMATION_TIMEOUT = 120
 DIFFICULTY_ESTIMATION_TIMEOUT = 80
 
@@ -63,9 +63,9 @@ class Worker:
             self.protocol.log.info("rate estimation failed for {log_source} at difficulty {difficulty}", difficulty=difficulty)
             rate = None
         else:
-            rate = self.rate.one_minute_rate()
-            self.protocol.log.info("Est. rate={rate:.1f}/s at D={difficulty} for {log_source} [{count} in {elapsed}]", 
-                rate=rate, difficulty=difficulty, count=self.rate.count, elapsed=self.rate.elapsed_time())
+            rate = self.rate.mean_rate()
+            self.protocol.log.info("Est. rate={rate:.1f}/s at D={difficulty} [{hashrate:0.1f}Ghash/s] for {log_source} [{count} in {elapsed}]", 
+                rate=rate, difficulty=difficulty, count=self.rate.count, elapsed=self.rate.elapsed_time(), hashrate=rate*difficulty*(1<<32)/1e9)
         callback(difficulty, rate, **args)
 
 
