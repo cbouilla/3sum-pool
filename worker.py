@@ -106,6 +106,7 @@ class Worker:
             if hashrate >= 0.95 * self.persistent.maximum_hashrate and objective <= 0.95 * best_objective:
                 difficulty_continuation(measures)
                 return
+            self.log.info("difficulty search: score={objective} @ D={D} (best={best} ({log_source})", objective=objective, D=difficulty, best=best_objective)
             best_objective = max(best_objective, objective)
             self._rate_estimation(difficulty+1, difficulty_callback,
                 args={'best_objective': best_objective, 'measures': measures}, timeout=DIFFICULTY_ESTIMATION_TIMEOUT)

@@ -133,7 +133,7 @@ class StratumProtocol(basic.LineOnlyReceiver):
         valid = share.valid()
         if not valid:
             if job_id != str(self.job_id):
-                self.log.info("stale share {share} from {log_source} [my jobid {mine} vs his {his}", share=share, his=job_id, mine=self.job_id)
+                self.log.debug("stale share {share} from {log_source} [my jobid {mine} vs his {his}", share=share, his=job_id, mine=self.job_id)
                 return True
             self.log.warn("invalid share {share} from {log_source}", share=share)
             return True
