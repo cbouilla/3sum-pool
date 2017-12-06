@@ -64,7 +64,7 @@ class Worker:
             rate = None
         else:
             rate = self.rate.mean_rate()
-            self.protocol.log.info("Est. rate={rate:.1f}/s at D={difficulty} [{hashrate:0.1f}Ghash/s] for {log_source} [{count} in {elapsed:.1}s]", 
+            self.protocol.log.info("Est. rate={rate:.1f}/s at D={difficulty} [{hashrate:0.1f}Ghash/s] for {log_source} [{count} in {elapsed:.1f}s]", 
                 rate=rate, difficulty=difficulty, count=self.rate.count, elapsed=self.rate.elapsed_time(), hashrate=rate*difficulty*(1<<32)/1e9)
         callback(difficulty, rate, **args)
 

@@ -8,10 +8,11 @@ from rate import RateMeter
 
 
 WORKDIR = '/mnt/large/'
+WORKDIR = ''
 
 WORKER_FILE = WORKDIR + "stats.bin"
-BLOCK_FILE = WORKDIR + "blocks5.bin"
-STRATUM_LOG = WORKDIR + 'stratum5.log'
+BLOCK_FILE = WORKDIR + "blocks6.bin"
+STRATUM_LOG = WORKDIR + 'stratum6.log'
 ACCESS_LOG = WORKDIR + 'access.log'
 
 
