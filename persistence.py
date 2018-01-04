@@ -11,7 +11,7 @@ WORKDIR = '/mnt/large/'
 WORKDIR = ''
 
 WORKER_FILE = WORKDIR + "stats.bin"
-BLOCK_FILE = WORKDIR + "blocks6.bin"
+BLOCK_FILE = WORKDIR + "blocks7.bin"
 STRATUM_LOG = WORKDIR + 'stratum6.log'
 ACCESS_LOG = WORKDIR + 'access.log'
 
