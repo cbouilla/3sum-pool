@@ -8,7 +8,6 @@ from rate import RateMeter
 
 
 WORKDIR = '/mnt/large/'
-WORKDIR = ''
 
 WORKER_FILE = WORKDIR + "stats.bin"
 BLOCK_FILE = WORKDIR + "blocks7.bin"
